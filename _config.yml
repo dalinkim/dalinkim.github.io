@@ -18,7 +18,7 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Dalin's Page
+title: Dalin's Unofficial Page
 email: no-reply@gmail.com
 description:
   This is my personal page with my own opinions.
