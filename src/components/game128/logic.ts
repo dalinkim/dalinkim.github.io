@@ -24,6 +24,8 @@ export type Stats = {
   best: number;
   wins: number;
   fewest: number | null;
+  /** Shortest time to reach GOAL, in milliseconds. */
+  fastest: number | null;
 };
 
 export type Game = Stats & {
@@ -37,6 +39,12 @@ export type Game = Stats & {
   winCounted: boolean;
   keepPlaying: boolean;
   lastGain: number;
+  // The clock. `elapsed` is banked time in ms. `since` is when the current
+  // running stretch began (null while stopped or paused). Live time is
+  // elapsed + (now - since).
+  elapsed: number;
+  since: number | null;
+  newFastest: boolean;
   undo: { tiles: Tile[]; score: number; moves: number; won: boolean } | null;
   ready: boolean;
 };
@@ -54,12 +62,16 @@ export const emptyGame: Game = {
   best: 0,
   wins: 0,
   fewest: null,
+  fastest: null,
   moves: 0,
   nextId: 1,
   won: false,
   winCounted: false,
   keepPlaying: false,
   lastGain: 0,
+  elapsed: 0,
+  since: null,
+  newFastest: false,
   undo: null,
   ready: false,
 };
@@ -96,7 +108,25 @@ export function newGame(stats: Stats, rolls: Rolls): Game {
 }
 
 function statsOf(game: Game): Stats {
-  return { best: game.best, wins: game.wins, fewest: game.fewest };
+  return { best: game.best, wins: game.wins, fewest: game.fewest, fastest: game.fastest };
+}
+
+/** Stop the clock and bank the running stretch. */
+export function bankTime(game: Game, now: number): Game {
+  if (game.since === null) return game;
+  return { ...game, elapsed: game.elapsed + Math.max(0, now - game.since), since: null };
+}
+
+/** Live clock reading in ms. */
+export function clockAt(game: Pick<Game, "elapsed" | "since">, now: number) {
+  return game.elapsed + (game.since === null ? 0 : Math.max(0, now - game.since));
+}
+
+export function formatTime(ms: number) {
+  const tenths = Math.floor(ms / 100);
+  const minutes = Math.floor(tenths / 600);
+  const seconds = Math.floor((tenths % 600) / 10);
+  return `${minutes}:${String(seconds).padStart(2, "0")}.${tenths % 10}`;
 }
 
 /** The cells of one row or column, ordered from the edge the tiles slide toward. */
@@ -159,7 +189,8 @@ export function canMove(tiles: Tile[]) {
 }
 
 export type Action =
-  | { type: "move"; dir: Direction; rolls: Rolls }
+  | { type: "move"; dir: Direction; rolls: Rolls; now: number }
+  | { type: "pause"; now: number }
   | { type: "new"; rolls: Rolls }
   | { type: "undo" }
   | { type: "keepPlaying" }
@@ -176,8 +207,19 @@ export function reducer(state: Game, action: Action): Game {
       const score = state.score + result.gained;
       const moves = state.moves + 1;
       const firstWin = !state.winCounted && maxTile(spawned.tiles) >= GOAL;
+
+      // The clock runs until the first win. The first move starts it, and any
+      // move after a pause resumes it. A win or a full board stops it.
+      let clock = { elapsed: state.elapsed, since: state.winCounted ? null : (state.since ?? action.now) };
+      if (firstWin || !canMove(spawned.tiles)) clock = bankTime({ ...state, ...clock }, action.now);
+      const newFastest = firstWin && (state.fastest === null || clock.elapsed < state.fastest);
+
       return {
         ...state,
+        elapsed: clock.elapsed,
+        since: clock.since,
+        newFastest,
+        fastest: newFastest ? clock.elapsed : state.fastest,
         tiles: spawned.tiles,
         nextId: spawned.nextId,
         score,
@@ -196,6 +238,8 @@ export function reducer(state: Game, action: Action): Game {
         },
       };
     }
+    case "pause":
+      return bankTime(state, action.now);
     case "undo": {
       if (!state.undo) return state;
       return { ...state, ...state.undo, lastGain: 0, undo: null };
@@ -222,7 +266,7 @@ export function reducer(state: Game, action: Action): Game {
   }
 }
 
-export type SavedGame = Pick<Game, "score" | "moves" | "won" | "winCounted" | "keepPlaying"> & {
+export type SavedGame = Pick<Game, "score" | "moves" | "won" | "winCounted" | "keepPlaying" | "elapsed"> & {
   tiles: Pick<Tile, "value" | "row" | "col">[];
 };
 
@@ -234,6 +278,7 @@ export function toSaved(game: Game): SavedGame {
     won: game.won,
     winCounted: game.winCounted,
     keepPlaying: game.keepPlaying,
+    elapsed: game.elapsed,
   };
 }
 
@@ -257,5 +302,6 @@ function parseSaved(raw: unknown): SavedGame | null {
     won: Boolean(s.won),
     winCounted: Boolean(s.winCounted),
     keepPlaying: Boolean(s.keepPlaying),
+    elapsed: typeof s.elapsed === "number" && s.elapsed >= 0 ? s.elapsed : 0,
   };
 }

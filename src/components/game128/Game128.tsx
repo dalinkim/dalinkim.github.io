@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useEffectEvent, useReducer, useRef } from "react";
+import { useEffect, useEffectEvent, useReducer, useRef, useState } from "react";
 import TileFace from "./TileFace";
 import {
   GOAL,
   LADDER,
+  bankTime,
   canMove,
+  clockAt,
   emptyGame,
+  formatTime,
   maxTile,
   reducer,
   rollDice,
@@ -50,7 +53,7 @@ export default function Game128({ children }: { children?: React.ReactNode }) {
   // board, so the first client render must match it before we fill it in.
   useEffect(() => {
     let saved: unknown = null;
-    let stats: Stats = { best: 0, wins: 0, fewest: null };
+    let stats: Stats = { best: 0, wins: 0, fewest: null, fastest: null };
     try {
       saved = JSON.parse(localStorage.getItem(SAVE_KEY) ?? "null");
       stats = parseStats(JSON.parse(localStorage.getItem(STATS_KEY) ?? "null"));
@@ -61,19 +64,23 @@ export default function Game128({ children }: { children?: React.ReactNode }) {
   useEffect(() => {
     if (!state.ready) return;
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(toSaved(state)));
-      const stats: Stats = { best: state.best, wins: state.wins, fewest: state.fewest };
+      // Effects may read the clock, unlike the reducer. Bank the running
+      // stretch so a crash or reload keeps the time up to now.
+      localStorage.setItem(SAVE_KEY, JSON.stringify(toSaved(bankTime(state, Date.now()))));
+      const stats: Stats = { best: state.best, wins: state.wins, fewest: state.fewest, fastest: state.fastest };
       localStorage.setItem(STATS_KEY, JSON.stringify(stats));
     } catch {}
   }, [state]);
 
-  function move(dir: Direction) {
+  // `now` comes from the event handler that triggered the move, so this
+  // function never reads the clock itself.
+  function move(dir: Direction, now: number) {
     if (!state.ready || showWin || over) return;
     if (!slide(state.tiles, dir, 0).moved) {
       nudge(dir);
       return;
     }
-    dispatch({ type: "move", dir, rolls: rollDice(2) });
+    dispatch({ type: "move", dir, rolls: rollDice(2), now });
   }
 
   // A small bump in the direction you tried, so a blocked move still feels physical.
@@ -99,13 +106,38 @@ export default function Game128({ children }: { children?: React.ReactNode }) {
     const dir = KEYS[e.key] ?? KEYS[e.key.toLowerCase()];
     if (dir) {
       e.preventDefault();
-      move(dir);
+      move(dir, Date.now());
     } else if (e.key === "u" || e.key === "U") {
       dispatch({ type: "undo" });
     } else if (e.key === "n" || e.key === "N") {
       restart();
     }
   });
+
+  // Pause the clock when the tab is hidden or the page is closing. It
+  // resumes on the next move. The save is written right here because a
+  // closing page may never get to run the effect above.
+  const onHide = useEffectEvent(() => {
+    if (!state.ready) return;
+    const now = Date.now();
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(toSaved(bankTime(state, now))));
+    } catch {}
+    dispatch({ type: "pause", now });
+  });
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") onHide();
+    };
+    const onPageHide = () => onHide();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => onKeyDown(e);
@@ -120,8 +152,9 @@ export default function Game128({ children }: { children?: React.ReactNode }) {
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
-    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? "right" : "left");
-    else move(dy > 0 ? "down" : "up");
+    const now = Date.now();
+    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? "right" : "left", now);
+    else move(dy > 0 ? "down" : "up", now);
   }
 
   // Render in id order so existing tiles never change DOM position, which
@@ -132,15 +165,19 @@ export default function Game128({ children }: { children?: React.ReactNode }) {
     <div className="grid gap-8 md:grid-cols-[minmax(0,30rem)_1fr] md:items-start lg:gap-12">
       <div>
         <div className="mb-4 grid grid-cols-3 gap-3">
-          <Stat label="Score" value={state.score}>
+          <Stat label="Score" value={state.score.toLocaleString()}>
             {state.lastGain > 0 && (
               <span key={state.moves} className="score-float font-display text-base font-extrabold text-primary">
                 +{state.lastGain}
               </span>
             )}
           </Stat>
-          <Stat label="Best" value={state.best} />
-          <Stat label="Moves" value={state.moves} />
+          <Stat label="Moves" value={state.moves.toLocaleString()} />
+          <Clock
+            elapsed={state.elapsed}
+            since={state.since}
+            paused={state.since === null && state.elapsed > 0 && !state.winCounted && !over}
+          />
         </div>
 
         <div className="board-wrap">
@@ -186,11 +223,19 @@ export default function Game128({ children }: { children?: React.ReactNode }) {
                 />
                 <p className="relative mt-5 font-display text-3xl font-extrabold tracking-tight">You hit 2⁷!</p>
                 <p className="relative mt-1 text-base text-ink-muted">
-                  {state.score.toLocaleString()} points in {state.moves} moves.
+                  {state.score.toLocaleString()} points, {state.moves} moves,{" "}
+                  <span className="font-semibold text-ink">{formatTime(state.elapsed)}</span>
                 </p>
-                <p className="relative mt-3 inline-block rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary">
-                  {state.wins === 1 ? "Your first completion" : `Completion #${state.wins}`} in this browser
-                </p>
+                <div className="relative mt-3 flex flex-wrap justify-center gap-1.5">
+                  <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary">
+                    {state.wins === 1 ? "Your first completion" : `Completion #${state.wins}`}
+                  </span>
+                  {state.newFastest && state.wins > 1 && (
+                    <span className="rounded-full bg-secondary-soft px-3 py-1 text-sm font-bold text-secondary">
+                      ⚡ New fastest time
+                    </span>
+                  )}
+                </div>
                 <div className="relative mt-5 flex flex-wrap justify-center gap-2">
                   <button type="button" autoFocus onClick={() => dispatch({ type: "keepPlaying" })} className={primaryButton}>
                     Keep going
@@ -254,7 +299,7 @@ export default function Game128({ children }: { children?: React.ReactNode }) {
 
       <aside className="space-y-5">
         <Ladder max={top} />
-        <Record wins={state.wins} fewest={state.fewest} best={state.best} />
+        <Record wins={state.wins} fewest={state.fewest} fastest={state.fastest} best={state.best} />
         {children}
       </aside>
     </div>
@@ -266,11 +311,11 @@ const primaryButton =
 const ghostButton =
   "inline-flex items-center gap-2 rounded-full border-2 border-line bg-surface px-5 py-2 text-base font-bold transition-colors hover:border-ink";
 
-function Stat({ label, value, children }: { label: string; value: number; children?: React.ReactNode }) {
+function Stat({ label, value, children }: { label: React.ReactNode; value: string; children?: React.ReactNode }) {
   return (
     <div className="relative rounded-2xl border border-line bg-surface px-4 py-2.5 shadow-[var(--shadow)]">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-muted">{label}</p>
-      <p className="font-display text-2xl font-extrabold tabular-nums tracking-tight">{value.toLocaleString()}</p>
+      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-ink-muted">{label}</p>
+      <p className="font-display text-2xl font-extrabold tabular-nums tracking-tight">{value}</p>
       {children}
     </div>
   );
@@ -334,10 +379,39 @@ function Ladder({ max }: { max: number }) {
   );
 }
 
+/**
+ * The live timer. It owns its own "now", refreshed 10 times a second only
+ * while the clock runs, so the ticking re-renders this card and nothing else.
+ */
+function Clock({ elapsed, since, paused }: { elapsed: number; since: number | null; paused: boolean }) {
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    if (since === null) return;
+    const id = setInterval(() => setNow(Date.now()), 100);
+    return () => clearInterval(id);
+  }, [since]);
+
+  const label = (
+    <>
+      Time
+      {since !== null && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />}
+      {paused && (
+        <span title="Paused. Resumes on your next move." className="flex gap-[2px]">
+          <span className="h-2 w-[3px] rounded-full bg-ink-muted/70" />
+          <span className="h-2 w-[3px] rounded-full bg-ink-muted/70" />
+          <span className="sr-only">paused</span>
+        </span>
+      )}
+    </>
+  );
+  return <Stat label={label} value={formatTime(clockAt({ elapsed, since }, now))} />;
+}
+
 const SHELF = 12;
 
 /** Lifetime stats for this browser: one gold tile on the shelf per completed game. */
-function Record({ wins, fewest, best }: Stats) {
+function Record({ wins, fewest, fastest, best }: Stats) {
   return (
     <section className="rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow)]">
       <div className="flex items-baseline justify-between gap-3">
@@ -373,13 +447,19 @@ function Record({ wins, fewest, best }: Stats) {
         )}
       </ul>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-dashed border-line pt-4">
+      <dl className="mt-4 grid grid-cols-3 items-end gap-3 border-t border-dashed border-line pt-4">
         <div>
-          <dt className="text-xs font-bold uppercase tracking-[0.16em] text-ink-muted">Fewest moves</dt>
+          <dt className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">Fastest</dt>
+          <dd className="font-display text-2xl font-extrabold tabular-nums text-secondary">
+            {fastest === null ? "—" : formatTime(fastest)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">Fewest moves</dt>
           <dd className="font-display text-2xl font-extrabold tabular-nums">{fewest ?? "—"}</dd>
         </div>
         <div>
-          <dt className="text-xs font-bold uppercase tracking-[0.16em] text-ink-muted">Best score</dt>
+          <dt className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">Best score</dt>
           <dd className="font-display text-2xl font-extrabold tabular-nums">{best.toLocaleString()}</dd>
         </div>
       </dl>
@@ -395,6 +475,7 @@ function parseStats(raw: unknown): Stats {
     best: count(s.best),
     wins: count(s.wins),
     fewest: typeof s.fewest === "number" && s.fewest > 0 ? Math.floor(s.fewest) : null,
+    fastest: typeof s.fastest === "number" && s.fastest > 0 ? s.fastest : null,
   };
 }
 

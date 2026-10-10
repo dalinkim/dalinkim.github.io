@@ -64,6 +64,15 @@ export default function PlayPage() {
                 <Key>N</Key>
                 <span className="text-ink-muted">start a new game</span>
               </li>
+              <li className="flex items-center gap-3">
+                <Key>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                    <circle cx="12" cy="14" r="7" />
+                    <path d="M12 14V10.5M10 3h4M18 7l1.5-1.5" />
+                  </svg>
+                </Key>
+                <span className="text-ink-muted">the clock starts on your first move and pauses when you switch tabs</span>
+              </li>
             </ul>
             <p className="mt-4 text-base text-ink-muted">
               Every move slides all the tiles as far as they go. Two tiles with the same number
