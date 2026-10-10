@@ -18,10 +18,10 @@ export default function Home() {
             <p className="mb-4 font-display text-lg font-bold text-secondary">
               Hello! <span lang="ko">안녕하세요!</span>
             </p>
-            <h1 className="font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+            <h1 className="font-display text-[clamp(1.9rem,9vw,3.75rem)] font-extrabold leading-[1.05] tracking-tight">
               I&apos;m Dalin. I build{" "}
               <span className="relative whitespace-nowrap text-primary">
-                data platforms
+                AI &amp; data platforms
                 <Squiggle />
               </span>{" "}
               and write about what I learn.
