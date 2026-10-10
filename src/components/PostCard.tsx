@@ -9,11 +9,6 @@ export default function PostCard({ post }: { post: PostMeta }) {
           <time dateTime={post.date}>{formatDate(post.date)}</time>
           <span aria-hidden="true">·</span>
           <span>{post.readingMinutes} min read</span>
-          {post.placeholder && (
-            <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-bold text-primary">
-              Placeholder
-            </span>
-          )}
         </div>
         <h3 className="font-display text-2xl font-extrabold leading-tight tracking-tight transition-colors group-hover:text-primary">
           {post.title}

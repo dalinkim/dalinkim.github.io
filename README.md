@@ -28,8 +28,6 @@ Markdown here. MDX components are available too:
 <Callout variant="tip">Callouts come in `info`, `tip` and `warning`.</Callout>
 ```
 
-Set `placeholder: true` in the front matter to show a "Placeholder" badge.
-
 ## Edit the resume
 
 Experience and projects on the About page come from `src/data/experience.ts`.

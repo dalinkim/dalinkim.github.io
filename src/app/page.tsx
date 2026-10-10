@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Avatar from "@/components/Avatar";
 import PostCard from "@/components/PostCard";
 import { getAllPosts } from "@/lib/posts";
 
@@ -14,8 +13,8 @@ export default function Home() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 [background-image:radial-gradient(var(--border)_1.5px,transparent_1.5px)] [background-size:24px_24px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
         />
-        <div className="relative mx-auto flex max-w-5xl flex-col-reverse items-start gap-10 px-4 pb-16 pt-14 sm:px-6 md:flex-row md:items-center md:pb-24 md:pt-24">
-          <div className="flex-1">
+        <div className="relative mx-auto max-w-3xl px-4 pb-16 pt-14 sm:px-6 md:pb-24 md:pt-24">
+          <div>
             <p className="mb-4 font-display text-lg font-bold text-secondary">
               Hello! <span lang="ko">안녕하세요!</span>
             </p>
@@ -28,8 +27,7 @@ export default function Home() {
               and write about what I learn.
             </h1>
             <p className="mt-6 max-w-xl text-xl text-ink-muted">
-              Staff engineer working on data and AI/ML platforms. This is where I keep notes on
-              data engineering, architecture and whatever I&apos;m tinkering with lately.
+              Staff engineer leading the enterprise AI/ML platform at Thrivent.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -45,10 +43,6 @@ export default function Home() {
                 About me
               </Link>
             </div>
-          </div>
-          <div className="relative shrink-0">
-            <div aria-hidden="true" className="absolute -inset-3 rotate-6 rounded-[2rem] bg-secondary-soft" />
-            <Avatar className="h-32 rounded-[1.5rem] sm:h-44 md:h-72 md:rounded-[1.75rem]" />
           </div>
         </div>
       </section>

@@ -26,9 +26,8 @@ There is no test framework. To check the production output, serve `out/` with an
 ## Architecture
 
 - **Theming:** colours are CSS variables in `src/app/globals.css`. `:root` holds light mode, `[data-theme="dark"]` holds dark mode, and `@theme inline` exposes them as Tailwind colours (`bg-bg`, `text-ink`, `text-primary`, `bg-surface-muted` and so on). Use these tokens rather than raw Tailwind palette colours. The `dark:` variant is keyed to `data-theme`. An inline script in `layout.tsx` sets `data-theme` before first paint, and `ThemeToggle` writes it and saves it to `localStorage`.
-- **Blog:** posts are `src/content/posts/<slug>.mdx` with front matter (`title`, `date`, `description`, `tags`, optional `placeholder`). `src/lib/posts.ts` reads them with `gray-matter` at build time. `src/app/blog/[slug]/page.tsx` renders them with `next-mdx-remote/rsc` (`remark-gfm`, `rehype-slug`). Components available inside MDX are registered in that page's `components` prop (currently `Callout`). Article typography is the hand-written `.prose` block in `globals.css`. There is no typography plugin.
-- **About page:** the resume content (experience grouped by company, and projects) lives in `src/data/experience.ts`. Edit the data, not the JSX.
-- `public/images/me.jpg` is an abstract gradient, not a portrait, so `Avatar` renders initials over it as a placeholder.
+- **Blog:** posts are `src/content/posts/<slug>.mdx` with front matter (`title`, `date`, `description`, `tags`). `src/lib/posts.ts` reads them with `gray-matter` at build time. `src/app/blog/[slug]/page.tsx` renders them with `next-mdx-remote/rsc` (`remark-gfm`, `rehype-slug`). Components available inside MDX are registered in that page's `components` prop (currently `Callout`). Article typography is the hand-written `.prose` block in `globals.css`. There is no typography plugin.
+- **About page:** the resume content (experience grouped by company, projects, education, skills and certifications) lives in `src/data/experience.ts`. Edit the data, not the JSX.
 
 ## Deployment
 

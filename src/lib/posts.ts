@@ -10,7 +10,6 @@ export interface PostMeta {
   date: string;
   description: string;
   tags: string[];
-  placeholder: boolean;
   readingMinutes: number;
 }
 
@@ -29,7 +28,6 @@ function readPost(slug: string): Post {
     date: data.date,
     description: data.description ?? "",
     tags: data.tags ?? [],
-    placeholder: data.placeholder ?? false,
     readingMinutes: Math.max(1, Math.round(words / 230)),
     content,
   };
