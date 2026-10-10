@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PlayTeaser from "@/components/game1024/PlayTeaser";
+import PlayTeaser from "@/components/game128/PlayTeaser";
 import PostCard from "@/components/PostCard";
 import { getAllPosts } from "@/lib/posts";
 

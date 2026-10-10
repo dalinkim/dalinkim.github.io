@@ -1,9 +1,9 @@
-// Pure game rules for 1024. No React in here, which keeps the rules easy to
+// Pure game rules for 128. No React in here, which keeps the rules easy to
 // reason about: every function takes data in and returns new data out.
 
 export const SIZE = 4;
-export const GOAL = 1024;
-export const LADDER = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
+export const GOAL = 128;
+export const LADDER = [2, 4, 8, 16, 32, 64, 128];
 
 export type Direction = "up" | "down" | "left" | "right";
 
@@ -19,13 +19,22 @@ export type Tile = {
   ghost?: boolean;
 };
 
-export type Game = {
+/** Lifetime numbers for this browser. They survive new games. */
+export type Stats = {
+  best: number;
+  wins: number;
+  fewest: number | null;
+};
+
+export type Game = Stats & {
   tiles: Tile[];
   score: number;
-  best: number;
   moves: number;
   nextId: number;
   won: boolean;
+  // Set the first time this game reaches GOAL, so undoing and re-merging
+  // the winning tile doesn't count a second completion.
+  winCounted: boolean;
   keepPlaying: boolean;
   lastGain: number;
   undo: { tiles: Tile[]; score: number; moves: number; won: boolean } | null;
@@ -43,9 +52,12 @@ export const emptyGame: Game = {
   tiles: [],
   score: 0,
   best: 0,
+  wins: 0,
+  fewest: null,
   moves: 0,
   nextId: 1,
   won: false,
+  winCounted: false,
   keepPlaying: false,
   lastGain: 0,
   undo: null,
@@ -77,10 +89,14 @@ function spawn(tiles: Tile[], nextId: number, cellRoll: number, valueRoll: numbe
   return { tiles: [...tiles, tile], nextId: nextId + 1 };
 }
 
-export function newGame(best: number, rolls: Rolls): Game {
+export function newGame(stats: Stats, rolls: Rolls): Game {
   let next = spawn([], 1, rolls[0], rolls[1]);
   next = spawn(next.tiles, next.nextId, rolls[2], rolls[3]);
-  return { ...emptyGame, tiles: next.tiles, nextId: next.nextId, best, ready: true };
+  return { ...emptyGame, ...stats, tiles: next.tiles, nextId: next.nextId, ready: true };
+}
+
+function statsOf(game: Game): Stats {
+  return { best: game.best, wins: game.wins, fewest: game.fewest };
 }
 
 /** The cells of one row or column, ordered from the edge the tiles slide toward. */
@@ -147,7 +163,7 @@ export type Action =
   | { type: "new"; rolls: Rolls }
   | { type: "undo" }
   | { type: "keepPlaying" }
-  | { type: "restore"; saved: unknown; best: number; rolls: Rolls };
+  | { type: "restore"; saved: unknown; stats: Stats; rolls: Rolls };
 
 export function reducer(state: Game, action: Action): Game {
   switch (action.type) {
@@ -158,14 +174,19 @@ export function reducer(state: Game, action: Action): Game {
 
       const spawned = spawn(result.tiles, result.nextId, action.rolls[0], action.rolls[1]);
       const score = state.score + result.gained;
+      const moves = state.moves + 1;
+      const firstWin = !state.winCounted && maxTile(spawned.tiles) >= GOAL;
       return {
         ...state,
         tiles: spawned.tiles,
         nextId: spawned.nextId,
         score,
         best: Math.max(state.best, score),
-        moves: state.moves + 1,
+        moves,
         won: state.won || maxTile(spawned.tiles) >= GOAL,
+        winCounted: state.winCounted || firstWin,
+        wins: state.wins + (firstWin ? 1 : 0),
+        fewest: firstWin ? Math.min(state.fewest ?? Infinity, moves) : state.fewest,
         lastGain: result.gained,
         undo: {
           tiles: liveTiles(state.tiles).map((t) => ({ ...t, kind: "start" })),
@@ -180,27 +201,28 @@ export function reducer(state: Game, action: Action): Game {
       return { ...state, ...state.undo, lastGain: 0, undo: null };
     }
     case "new":
-      return newGame(state.best, action.rolls);
+      return newGame(statsOf(state), action.rolls);
     case "keepPlaying":
       return { ...state, keepPlaying: true };
     case "restore": {
       const saved = parseSaved(action.saved);
-      if (!saved) return newGame(action.best, action.rolls);
+      if (!saved) return newGame(action.stats, action.rolls);
       // Fresh ids, and "new" so the restored board fades in.
       const tiles = saved.tiles.map((t, i) => ({ ...t, id: i + 1, kind: "new" as const }));
       return {
         ...emptyGame,
+        ...action.stats,
         ...saved,
         tiles,
         nextId: tiles.length + 1,
-        best: Math.max(action.best, saved.score),
+        best: Math.max(action.stats.best, saved.score),
         ready: true,
       };
     }
   }
 }
 
-export type SavedGame = Pick<Game, "score" | "moves" | "won" | "keepPlaying"> & {
+export type SavedGame = Pick<Game, "score" | "moves" | "won" | "winCounted" | "keepPlaying"> & {
   tiles: Pick<Tile, "value" | "row" | "col">[];
 };
 
@@ -210,6 +232,7 @@ export function toSaved(game: Game): SavedGame {
     score: game.score,
     moves: game.moves,
     won: game.won,
+    winCounted: game.winCounted,
     keepPlaying: game.keepPlaying,
   };
 }
@@ -232,6 +255,7 @@ function parseSaved(raw: unknown): SavedGame | null {
     score: s.score,
     moves: typeof s.moves === "number" ? s.moves : 0,
     won: Boolean(s.won),
+    winCounted: Boolean(s.winCounted),
     keepPlaying: Boolean(s.keepPlaying),
   };
 }

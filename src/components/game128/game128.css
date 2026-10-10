@@ -1,6 +1,7 @@
-/* ---------- 1024: tile palette ----------
+/* ---------- 128: tile palette ----------
    Each value sets three variables; .tile-face paints with them. The ramp runs
-   warm (cream, apricot, coral) to cool (violet, blue) and ends in gold at 1024. */
+   warm (cream, apricot, coral) to pink and violet, and ends in gold at 128.
+   Anything past 128 (if you keep going) gets the teal-to-violet "super" tile. */
 .tile-face {
   --tile-bg: var(--surface);
   --tile-ink: var(--ink);
@@ -26,33 +27,29 @@
 .tile-face[data-value="2"] { --tile-bg: hsl(40 55% 98%); --tile-ink: hsl(240 22% 24%); }
 .tile-face[data-value="4"] { --tile-bg: hsl(40 88% 86%); --tile-ink: hsl(30 45% 22%); }
 .tile-face[data-value="8"] { --tile-bg: hsl(30 95% 66%); --tile-ink: hsl(0 0% 100%); }
-.tile-face[data-value="16"] { --tile-bg: hsl(16 90% 59%); --tile-ink: hsl(0 0% 100%); }
-.tile-face[data-value="32"] { --tile-bg: hsl(2 80% 57%); --tile-ink: hsl(0 0% 100%); }
-.tile-face[data-value="64"] { --tile-bg: hsl(340 78% 54%); --tile-ink: hsl(0 0% 100%); }
-.tile-face[data-value="128"] { --tile-bg: hsl(312 62% 50%); --tile-ink: hsl(0 0% 100%); --tile-glow: hsl(312 70% 55% / 0.35); }
-.tile-face[data-value="256"] { --tile-bg: hsl(265 72% 58%); --tile-ink: hsl(0 0% 100%); --tile-glow: hsl(265 80% 60% / 0.4); }
-.tile-face[data-value="512"] { --tile-bg: hsl(214 82% 52%); --tile-ink: hsl(0 0% 100%); --tile-glow: hsl(214 90% 55% / 0.45); }
-.tile-face[data-value="1024"] {
+.tile-face[data-value="16"] { --tile-bg: hsl(14 88% 58%); --tile-ink: hsl(0 0% 100%); }
+.tile-face[data-value="32"] { --tile-bg: hsl(340 78% 54%); --tile-ink: hsl(0 0% 100%); --tile-glow: hsl(340 80% 55% / 0.3); }
+.tile-face[data-value="64"] { --tile-bg: hsl(265 72% 58%); --tile-ink: hsl(0 0% 100%); --tile-glow: hsl(265 80% 60% / 0.4); }
+.tile-face[data-value="128"] {
   --tile-bg: linear-gradient(135deg, hsl(48 100% 62%), hsl(34 100% 54%) 55%, hsl(22 95% 52%));
   --tile-ink: hsl(25 70% 16%);
   --tile-glow: hsl(42 100% 55% / 0.6);
 }
 .tile-face[data-value="super"] {
-  --tile-bg: linear-gradient(135deg, hsl(174 72% 34%), hsl(262 72% 48%));
+  --tile-bg: linear-gradient(135deg, hsl(174 72% 34%), hsl(214 82% 52%) 50%, hsl(262 72% 50%));
   --tile-ink: hsl(0 0% 100%);
   --tile-glow: hsl(200 90% 55% / 0.55);
 }
 
 [data-theme="dark"] .tile-face[data-value="2"] { --tile-bg: hsl(234 18% 30%); --tile-ink: hsl(36 30% 93%); }
 [data-theme="dark"] .tile-face[data-value="4"] { --tile-bg: hsl(40 70% 78%); --tile-ink: hsl(30 45% 18%); }
-[data-theme="dark"] .tile-face[data-value="128"] { --tile-glow: hsl(312 90% 60% / 0.55); }
-[data-theme="dark"] .tile-face[data-value="256"] { --tile-glow: hsl(265 95% 68% / 0.6); }
-[data-theme="dark"] .tile-face[data-value="512"] { --tile-glow: hsl(214 95% 62% / 0.6); }
-[data-theme="dark"] .tile-face[data-value="1024"] { --tile-glow: hsl(42 100% 58% / 0.75); }
+[data-theme="dark"] .tile-face[data-value="32"] { --tile-glow: hsl(340 90% 60% / 0.5); }
+[data-theme="dark"] .tile-face[data-value="64"] { --tile-glow: hsl(265 95% 68% / 0.6); }
+[data-theme="dark"] .tile-face[data-value="128"] { --tile-glow: hsl(42 100% 58% / 0.75); }
 
 /* A light sweep across the gold tile. It lives on ::after so it doesn't fight
    the entrance animation on the tile itself. */
-.tile-face[data-value="1024"]::after,
+.tile-face[data-value="128"]::after,
 .tile-face[data-value="super"]::after {
   content: "";
   position: absolute;
@@ -62,7 +59,7 @@
   animation: tile-shimmer 2.6s linear infinite;
 }
 
-/* ---------- 1024: board ---------- */
+/* ---------- 128: board ---------- */
 .board-wrap {
   container-type: inline-size;
 }
@@ -150,7 +147,7 @@
   animation: tile-pop 220ms 100ms ease-out backwards;
 }
 
-/* ---------- 1024: extras ---------- */
+/* ---------- 128: extras ---------- */
 .score-float {
   position: absolute;
   right: 0.75rem;

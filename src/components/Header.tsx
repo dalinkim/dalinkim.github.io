@@ -35,8 +35,8 @@ export default function Header() {
           ))}
           <Link
             href="/play/"
-            aria-label="Play 1024"
-            title="Play 1024"
+            aria-label="Play 128"
+            title="Play 128"
             className="group flex items-center gap-2 rounded-full p-2 text-base font-semibold text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink sm:py-1.5 sm:pl-2.5 sm:pr-3.5"
           >
             <TilesIcon />
@@ -49,7 +49,7 @@ export default function Header() {
   );
 }
 
-/** Four mini tiles in the 1024 palette. They shuffle a little on hover. */
+/** Four mini tiles in the 128 palette. They shuffle a little on hover. */
 function TilesIcon() {
   return (
     <span aria-hidden="true" className="grid h-5 w-5 grid-cols-2 gap-[2px]">

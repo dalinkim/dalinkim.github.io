@@ -4,14 +4,14 @@ import TileFace from "./TileFace";
 // A frozen mid-game board: [value, col, row].
 const PREVIEW: [number, number, number][] = [
   [2, 0, 0],
-  [8, 2, 0],
-  [4, 3, 0],
-  [16, 1, 1],
-  [64, 2, 1],
-  [128, 0, 2],
-  [256, 1, 2],
-  [512, 2, 2],
-  [1024, 3, 2],
+  [4, 2, 0],
+  [2, 3, 0],
+  [8, 1, 1],
+  [4, 2, 1],
+  [16, 0, 2],
+  [32, 1, 2],
+  [64, 2, 2],
+  [128, 3, 2],
   [4, 0, 3],
   [2, 3, 3],
 ];
@@ -28,9 +28,9 @@ export default function PlayTeaser() {
       />
       <div className="relative flex-1">
         <p className="font-display text-base font-bold text-secondary">Need a break?</p>
-        <h2 className="mt-1 font-display text-3xl font-extrabold tracking-tight">Play 1024</h2>
+        <h2 className="mt-1 font-display text-3xl font-extrabold tracking-tight">Play 128</h2>
         <p className="mt-2 text-base text-ink-muted">
-          My take on 2048, cut in half for a coffee break. Slide, merge and climb to 2<sup>10</sup>.
+          My take on 2048, shrunk to fit a coffee break. Slide, merge and climb to 2<sup>7</sup>.
         </p>
         <span className="mt-4 inline-flex items-center gap-1 font-bold text-primary">
           Start a game

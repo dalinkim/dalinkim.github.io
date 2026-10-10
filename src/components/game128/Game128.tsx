@@ -13,10 +13,11 @@ import {
   slide,
   toSaved,
   type Direction,
+  type Stats,
 } from "./logic";
 
-const SAVE_KEY = "game1024:save";
-const BEST_KEY = "game1024:best";
+const SAVE_KEY = "game128:save";
+const STATS_KEY = "game128:stats";
 
 const KEYS: Record<string, Direction> = {
   ArrowUp: "up",
@@ -36,7 +37,7 @@ const NUDGE: Record<Direction, [number, number]> = {
   right: [6, 0],
 };
 
-export default function Game1024({ children }: { children?: React.ReactNode }) {
+export default function Game128({ children }: { children?: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, emptyGame);
   const boardRef = useRef<HTMLDivElement>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
@@ -49,19 +50,20 @@ export default function Game1024({ children }: { children?: React.ReactNode }) {
   // board, so the first client render must match it before we fill it in.
   useEffect(() => {
     let saved: unknown = null;
-    let storedBest = 0;
+    let stats: Stats = { best: 0, wins: 0, fewest: null };
     try {
       saved = JSON.parse(localStorage.getItem(SAVE_KEY) ?? "null");
-      storedBest = Number(localStorage.getItem(BEST_KEY)) || 0;
+      stats = parseStats(JSON.parse(localStorage.getItem(STATS_KEY) ?? "null"));
     } catch {}
-    dispatch({ type: "restore", saved, best: storedBest, rolls: rollDice() });
+    dispatch({ type: "restore", saved, stats, rolls: rollDice() });
   }, []);
 
   useEffect(() => {
     if (!state.ready) return;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(toSaved(state)));
-      localStorage.setItem(BEST_KEY, String(state.best));
+      const stats: Stats = { best: state.best, wins: state.wins, fewest: state.fewest };
+      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
     } catch {}
   }, [state]);
 
@@ -146,7 +148,7 @@ export default function Game1024({ children }: { children?: React.ReactNode }) {
             ref={boardRef}
             className="board"
             role="group"
-            aria-label="1024 board. Use the arrow keys or swipe to slide the tiles."
+            aria-label="128 board. Use the arrow keys or swipe to slide the tiles."
             onPointerDown={(e) => (swipeStart.current = { x: e.clientX, y: e.clientY })}
             onPointerUp={onPointerUp}
             onPointerCancel={() => (swipeStart.current = null)}
@@ -182,9 +184,12 @@ export default function Game1024({ children }: { children?: React.ReactNode }) {
                   value={GOAL}
                   className="relative mx-auto h-24 w-24 rotate-[-6deg] rounded-2xl text-3xl [--tile-depth:5px]"
                 />
-                <p className="relative mt-5 font-display text-3xl font-extrabold tracking-tight">You hit 2¹⁰!</p>
+                <p className="relative mt-5 font-display text-3xl font-extrabold tracking-tight">You hit 2⁷!</p>
                 <p className="relative mt-1 text-base text-ink-muted">
                   {state.score.toLocaleString()} points in {state.moves} moves.
+                </p>
+                <p className="relative mt-3 inline-block rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary">
+                  {state.wins === 1 ? "Your first completion" : `Completion #${state.wins}`} in this browser
                 </p>
                 <div className="relative mt-5 flex flex-wrap justify-center gap-2">
                   <button type="button" autoFocus onClick={() => dispatch({ type: "keepPlaying" })} className={primaryButton}>
@@ -249,6 +254,7 @@ export default function Game1024({ children }: { children?: React.ReactNode }) {
 
       <aside className="space-y-5">
         <Ladder max={top} />
+        <Record wins={state.wins} fewest={state.fewest} best={state.best} />
         {children}
       </aside>
     </div>
@@ -296,7 +302,7 @@ function Ladder({ max }: { max: number }) {
           )}
         </p>
       </div>
-      <ol className="mt-4 grid grid-cols-5 gap-2">
+      <ol className="mt-4 grid grid-cols-7 gap-1.5 sm:gap-2">
         {LADDER.map((v) => {
           const lit = max >= v;
           return (
@@ -305,12 +311,12 @@ function Ladder({ max }: { max: number }) {
                 <TileFace
                   value={v}
                   kind="merged"
-                  className={`aspect-square rounded-xl text-[0.85rem] [--tile-depth:3px] ${
+                  className={`aspect-square rounded-lg text-[0.8rem] [--tile-depth:3px] ${
                     v === max || (v === GOAL && max > GOAL) ? "ring-2 ring-ink ring-offset-2 ring-offset-surface" : ""
                   }`}
                 />
               ) : (
-                <div className="grid aspect-square place-items-center rounded-xl border-2 border-dashed border-line font-display text-[0.85rem] font-extrabold text-ink-muted/60">
+                <div className="grid aspect-square place-items-center rounded-lg border-2 border-dashed border-line font-display text-[0.8rem] font-extrabold text-ink-muted/60">
                   {v}
                 </div>
               )}
@@ -326,6 +332,70 @@ function Ladder({ max }: { max: number }) {
       </div>
     </section>
   );
+}
+
+const SHELF = 12;
+
+/** Lifetime stats for this browser: one gold tile on the shelf per completed game. */
+function Record({ wins, fewest, best }: Stats) {
+  return (
+    <section className="rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow)]">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-xl font-extrabold tracking-tight">Your record</h2>
+        <p className="text-sm text-ink-muted">Saved in this browser</p>
+      </div>
+
+      <div className="mt-4 flex items-center gap-4">
+        <p className="font-display text-5xl font-extrabold tabular-nums tracking-tight">{wins}</p>
+        <p className="text-base leading-snug text-ink-muted">
+          {wins === 1 ? "game" : "games"} completed
+          <br />
+          {wins === 0 ? "Reach 128 to earn your first gold tile." : "Each gold tile is one run to 128."}
+        </p>
+      </div>
+
+      <ul aria-hidden="true" className="mt-4 flex flex-wrap gap-1.5">
+        {Array.from({ length: Math.max(1, Math.min(wins, SHELF)) }, (_, i) =>
+          i < wins ? (
+            <li key={i}>
+              <TileFace
+                value={GOAL}
+                className="h-8 w-8 rounded-md text-[0.6rem] [--tile-depth:2px]"
+                style={{ rotate: `${((i * 7) % 11) - 5}deg` }}
+              />
+            </li>
+          ) : (
+            <li key={i} className="h-8 w-8 rounded-md border-2 border-dashed border-line" />
+          ),
+        )}
+        {wins > SHELF && (
+          <li className="grid h-8 place-items-center px-1 text-sm font-bold text-ink-muted">+{wins - SHELF}</li>
+        )}
+      </ul>
+
+      <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-dashed border-line pt-4">
+        <div>
+          <dt className="text-xs font-bold uppercase tracking-[0.16em] text-ink-muted">Fewest moves</dt>
+          <dd className="font-display text-2xl font-extrabold tabular-nums">{fewest ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-bold uppercase tracking-[0.16em] text-ink-muted">Best score</dt>
+          <dd className="font-display text-2xl font-extrabold tabular-nums">{best.toLocaleString()}</dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
+// localStorage can hold anything, so fall back to zeros if it looks wrong.
+function parseStats(raw: unknown): Stats {
+  const s = (raw && typeof raw === "object" ? raw : {}) as Partial<Stats>;
+  const count = (n: unknown) => (typeof n === "number" && Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0);
+  return {
+    best: count(s.best),
+    wins: count(s.wins),
+    fewest: typeof s.fewest === "number" && s.fewest > 0 ? Math.floor(s.fewest) : null,
+  };
 }
 
 // Deterministic "random" pieces: the same on every render, so nothing jumps.

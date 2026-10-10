@@ -65,3 +65,8 @@ Build a modern, premium personal website using **Next.js**. The site will featur
   - `TileFace.tsx` + `game1024.css`: the tile palette (warm → cool → gold at 1024) via `data-value`, sliding via CSS transitions on `--col`/`--row`, delayed appear/pop keyframes, and confetti. Board sizes use container query units (`cqw`).
   - `PlayTeaser.tsx`: the home-page card.
 - Entry points: the header "Play" link (icon only below `sm`), the home teaser, the footer and the 404 page.
+
+### Phase 9: 1024 becomes 128, plus a completion record (2026-10-10)
+- The goal dropped from 1024 to 128 (`GOAL` in `logic.ts`) for a shorter game. Everything was renamed to match: `src/components/game128/` (`Game128.tsx`, `game128.css`), the title tiles, metadata and the header, footer, 404 and home links. The tile palette was compressed to 7 steps (cream → apricot → coral → pink → violet → gold at 128), and anything past 128 uses the "super" tile.
+- Lifetime stats for each browser are saved in `localStorage` under `game128:stats` (`best`, `wins`, `fewest`). The game in progress is under `game128:save`, so old 1024 saves are ignored. A per-game `winCounted` flag (saved with the game, but not in the undo snapshot) makes sure undoing and re-merging the 128 tile, or reloading a won game, never counts twice.
+- New "Your record" sidebar card: the completion count, a shelf with one gold tile per completion (12 shown, then "+N"), the fewest moves to 128 and the best score. The win screen shows "Completion #N in this browser".

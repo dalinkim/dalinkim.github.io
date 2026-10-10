@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import Game1024 from "@/components/game1024/Game1024";
-import TileFace from "@/components/game1024/TileFace";
+import Game128 from "@/components/game128/Game128";
+import TileFace from "@/components/game128/TileFace";
 
 export const metadata: Metadata = {
-  title: "Play 1024",
-  description: "A quick-fire take on 2048. Slide the tiles, merge the numbers, reach 1024.",
+  title: "Play 128",
+  description: "A quick-fire take on 2048. Slide the tiles, merge the numbers, reach 128.",
 };
 
 const TITLE = [
   { char: "1", value: 16, tilt: "-rotate-6" },
-  { char: "0", value: 64, tilt: "rotate-3" },
-  { char: "2", value: 256, tilt: "-rotate-2" },
-  { char: "4", value: 1024, tilt: "rotate-6" },
+  { char: "2", value: 64, tilt: "rotate-3" },
+  { char: "8", value: 128, tilt: "rotate-6" },
 ];
 
 export default function PlayPage() {
@@ -26,7 +25,7 @@ export default function PlayPage() {
           <div>
             <p className="font-display text-lg font-bold text-secondary">Take a break</p>
             <h1 className="mt-3 flex gap-2 sm:gap-3">
-              <span className="sr-only">1024</span>
+              <span className="sr-only">128</span>
               {TITLE.map((t) => (
                 <TileFace
                   key={t.char}
@@ -39,12 +38,12 @@ export default function PlayPage() {
             </h1>
           </div>
           <p className="max-w-sm text-lg text-ink-muted md:text-right">
-            It&apos;s 2048, cut in half so it fits a coffee break. Slide the tiles, merge matching
-            numbers and climb to <strong className="text-ink">1024</strong>.
+            It&apos;s 2048, shrunk so a whole run fits in a coffee break. Slide the tiles, merge
+            matching numbers and climb to <strong className="text-ink">128</strong>.
           </p>
         </header>
 
-        <Game1024>
+        <Game128>
           <section className="rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow)]">
             <h2 className="font-display text-xl font-extrabold tracking-tight">How to play</h2>
             <ul className="mt-4 space-y-3 text-base">
@@ -73,14 +72,14 @@ export default function PlayPage() {
           </section>
 
           <section className="rounded-3xl border border-dashed border-line p-5">
-            <h2 className="font-display text-xl font-extrabold tracking-tight">Why 1024?</h2>
+            <h2 className="font-display text-xl font-extrabold tracking-tight">Why 128?</h2>
             <p className="mt-2 text-base text-ink-muted">
-              1024 is 2<sup>10</sup>, the number of bytes in a kibibyte and a very satisfying
-              number for anyone who works with data. It also takes roughly half the moves of the
-              original game, so a full run fits in a few minutes.
+              128 is 2<sup>7</sup>: the number of bits in a UUID and the number of characters in
+              7-bit ASCII, so a familiar number for anyone who works with data. It&apos;s also a
+              sixteenth of 2048, so a full run takes minutes, not an afternoon.
             </p>
           </section>
-        </Game1024>
+        </Game128>
       </div>
     </div>
   );

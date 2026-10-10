@@ -1,4 +1,4 @@
-import "./game1024.css";
+import "./game128.css";
 import { GOAL } from "./logic";
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
   children?: React.ReactNode;
 };
 
-/** A coloured 1024 tile. Used by the board, the ladder, the page title and the home teaser. */
+/** A coloured 128 tile. Used by the board, the ladder, the page title and the home teaser. */
 export default function TileFace({ value, kind, className = "", style, children }: Props) {
   return (
     <div
