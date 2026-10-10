@@ -56,3 +56,12 @@ Build a modern, premium personal website using **Next.js**. The site will featur
   - `retrieval.tsx`, `systems.tsx`, `operations.tsx`: one-off diagrams for Parts 1, 2 and 3 (inline SVG or Tailwind layouts).
   - `index.ts` exports `diagramComponents`, which `blog/[slug]/page.tsx` spreads into the MDX `components` map.
 - All diagram colours use the theme tokens (`fill-primary`, `bg-secondary-soft`, `stroke-line`…), so they follow light/dark mode. Step rows stack vertically below the `sm` breakpoint.
+
+### Phase 8: 1024 game (2026-10-10)
+- Added `/play/`, a 2048-style game that ends at 1024. It runs entirely in the browser, so it works on the static export.
+- `src/components/game1024/`:
+  - `logic.ts`: pure rules (`slide`, `canMove`, `reducer`). Random numbers are rolled outside the reducer (`rollDice`) and passed in through actions, so the reducer stays pure.
+  - `Game1024.tsx`: the client component. It uses `useReducer` for state, `useEffectEvent` for the global keyboard listener (arrows, WASD, U to undo, N for a new game), pointer events for swipes, and the Web Animations API for the "nudge" on a blocked move. The game and best score are saved to `localStorage` after mount, so the first client render still matches the server HTML. The page passes its static sidebar cards in as `children`.
+  - `TileFace.tsx` + `game1024.css`: the tile palette (warm → cool → gold at 1024) via `data-value`, sliding via CSS transitions on `--col`/`--row`, delayed appear/pop keyframes, and confetti. Board sizes use container query units (`cqw`).
+  - `PlayTeaser.tsx`: the home-page card.
+- Entry points: the header "Play" link (icon only below `sm`), the home teaser, the footer and the 404 page.

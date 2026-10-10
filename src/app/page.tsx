@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PlayTeaser from "@/components/game1024/PlayTeaser";
 import PostCard from "@/components/PostCard";
 import { getAllPosts } from "@/lib/posts";
 
@@ -60,6 +61,10 @@ export default function Home() {
             <PostCard key={post.slug} post={post} />
           ))}
         </div>
+      </section>
+
+      <section className="mx-auto mt-16 max-w-3xl px-4 sm:px-6">
+        <PlayTeaser />
       </section>
     </>
   );

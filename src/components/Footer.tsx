@@ -22,6 +22,9 @@ export default function Footer() {
           <Link href="/about/" className="text-ink-muted transition-colors hover:text-primary">
             About
           </Link>
+          <Link href="/play/" className="text-ink-muted transition-colors hover:text-primary">
+            Play 1024
+          </Link>
           {LINKS.map((link) => (
             <a
               key={link.href}
