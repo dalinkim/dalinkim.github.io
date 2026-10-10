@@ -36,9 +36,13 @@ export const experiences: CompanyExperience[] = [
                 period: "01/2025 – Present",
                 current: true,
                 highlights: [
-                    "Leading strategic direction and technical execution of enterprise AI/ML platform architecting hybrid AWS and Databricks ecosystem for end-to-end model lifecycle management.",
-                    "Engineered standardized MLOps framework and CI/CD pipelines accelerating the deployment of batch and real-time ML solutions from initial onboarding to production.",
-                    "Drove cross-functional alignment on AI/ML delivery standards codifying foundational blueprints to enforce security, cost optimization, and operational health.",
+                    "Designed and drove the foundational AI/ML platform architecture on Databricks, establishing a new home for data science teams and migrating them off a legacy data platform.",
+                    "Led a paved-path approach to AI/ML delivery, building an MLOps framework with standardized CI/CD so deployments are repeatable across teams and environments.",
+                    "Served as a primary engineering lead in the enterprise AI/ML charter, driving cross-org alignment on AI/ML direction, ownership, and delivery standards.",
+                    "Shaped a hybrid Databricks + AWS architecture for batch and real-time ML, guiding teams through RBAC, environment readiness, cross-account networking, and IaC patterns on a new AWS platform.",
+                    "Authored foundational ADRs on environment isolation and IaC standards, and owned the batch and real-time ML reference architecture as the source of truth for delivery decisions.",
+                    "Reduced support load and onboarding time with self-service onboarding guides, support documentation, and reusable templates.",
+                    "Ran hands-on lab sessions at the Thrivent Engineering Conference, organized recurring AI/ML communities of practice, and mentored engineers on platform architecture and intent.",
                 ],
             },
             {
@@ -162,7 +166,7 @@ export const skills: string[] = [
 
 export const certifications: string[] = [
     "AWS Certified Cloud Practitioner",
-    "AWS Certified AI Practitioner",
+    "AWS Certified AI Practitioner (Early Adopter)",
     "Databricks Certified Generative AI Engineer Associate",
     "Databricks Certified Associate Developer for Apache Spark 3.0",
     "Data Engineering with Databricks",
