@@ -1,0 +1,196 @@
+/* ---------- Pipeline: board ----------
+   The board shares 128's sand-coloured tray. Cells sit edge to edge with no
+   gap, so the arms of neighbouring tiles meet and read as one pipe. */
+.pipe-board-wrap {
+  container-type: inline-size;
+  --pipe-idle: hsl(36 14% 72%);
+}
+
+[data-theme="dark"] .pipe-board-wrap {
+  --pipe-idle: hsl(234 14% 34%);
+}
+
+.pipe-board {
+  padding: 2.8cqw;
+  border-radius: 4.5cqw;
+  background: hsl(36 26% 84%);
+  box-shadow:
+    inset 0 2px 6px hsl(36 30% 30% / 0.18),
+    var(--shadow);
+  user-select: none;
+  -webkit-user-select: none;
+  /* Taps rotate tiles straight away instead of waiting to see if it's a double-tap zoom. */
+  touch-action: manipulation;
+}
+
+[data-theme="dark"] .pipe-board {
+  background: hsl(234 26% 15%);
+  box-shadow:
+    inset 0 2px 8px hsl(0 0% 0% / 0.45),
+    0 0 0 1px var(--border),
+    var(--shadow);
+}
+
+.pipe-board[data-solved="true"] {
+  animation: board-solved 900ms ease-out;
+}
+
+.pipe-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: 2.4cqw;
+  background: hsl(36 30% 91%);
+  box-shadow: inset 0 2px 4px hsl(36 30% 40% / 0.12);
+}
+
+[data-theme="dark"] .pipe-grid {
+  background: hsl(234 22% 20%);
+  box-shadow: inset 0 2px 4px hsl(0 0% 0% / 0.35);
+}
+
+.pipe-cell {
+  position: relative;
+  aspect-ratio: 1;
+  box-shadow: inset 0 0 0 0.5px hsl(36 18% 82%);
+  transition: background-color 150ms;
+}
+
+[data-theme="dark"] .pipe-cell {
+  box-shadow: inset 0 0 0 0.5px hsl(234 18% 25%);
+}
+
+button.pipe-cell {
+  cursor: pointer;
+}
+
+button.pipe-cell:hover:not(:disabled) {
+  background: hsl(0 0% 100% / 0.5);
+}
+
+[data-theme="dark"] button.pipe-cell:hover:not(:disabled) {
+  background: hsl(0 0% 100% / 0.05);
+}
+
+button.pipe-cell:disabled {
+  cursor: default;
+}
+
+button.pipe-cell:focus-visible {
+  z-index: 1;
+  outline: 3px solid var(--primary);
+  outline-offset: -3px;
+  border-radius: 0;
+}
+
+/* ---------- Pipeline: pipes ----------
+   The whole drawing turns with the tile. --rot counts quarter turns and keeps
+   growing, so every click spins forward. */
+.pipe-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(calc(var(--rot) * 90deg));
+  transition: transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.pipe-arm {
+  fill: none;
+  stroke: var(--pipe-idle);
+  stroke-width: 22;
+  stroke-linecap: round;
+  transition: stroke 200ms;
+}
+
+.pipe-arm[data-state="lit"] {
+  stroke: var(--secondary);
+}
+
+/* A lit pipe that runs into a wall or a closed side: the data spills here. */
+.pipe-arm[data-state="leak"] {
+  stroke: var(--warning);
+}
+
+/* Dots travelling along each lit pipe, away from the source. */
+.pipe-flow {
+  fill: none;
+  stroke: color-mix(in srgb, var(--surface) 80%, transparent);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 1 17;
+  animation: pipe-flow 650ms linear infinite;
+}
+
+.pipe-board[data-solved="true"] .pipe-svg {
+  filter: drop-shadow(0 0 0.6cqw color-mix(in srgb, var(--secondary) 55%, transparent));
+}
+
+/* ---------- Pipeline: source and tables ----------
+   These sit on top of the turning pipes and stay upright. */
+.pipe-icon {
+  position: absolute;
+  inset: 22%;
+  display: grid;
+  place-items: center;
+  border-radius: 28%;
+  pointer-events: none;
+}
+
+.pipe-icon svg {
+  width: 64%;
+  height: 64%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pipe-source {
+  inset: 15%;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--bg);
+  box-shadow: 0 0 0 0.8cqw color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.pipe-table {
+  background: var(--surface);
+  color: var(--ink-muted);
+  box-shadow: inset 0 0 0 2px var(--pipe-idle);
+  transition: background-color 200ms, color 200ms;
+}
+
+.pipe-table[data-lit="true"] {
+  background: var(--secondary);
+  color: var(--surface);
+  box-shadow: none;
+  animation: table-fill 380ms ease-out;
+}
+
+.pipe-win {
+  animation: pipe-win 360ms 250ms ease-out backwards;
+}
+
+@keyframes pipe-win {
+  from { opacity: 0; transform: translateY(0.75rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pipe-flow {
+  from { stroke-dashoffset: 18; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes table-fill {
+  0% { transform: scale(0.75); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes board-solved {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}

@@ -35,8 +35,8 @@ export default function Header() {
           ))}
           <Link
             href="/play/"
-            aria-label="Play 128"
-            title="Play 128"
+            aria-label="Play a game"
+            title="Play a game"
             className="group flex items-center gap-2 rounded-full p-2 text-base font-semibold text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink sm:py-1.5 sm:pl-2.5 sm:pr-3.5"
           >
             <TilesIcon />

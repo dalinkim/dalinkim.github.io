@@ -17,7 +17,7 @@ export default function NotFound() {
           href="/play/"
           className="rounded-full border-2 border-line px-6 py-3 font-bold transition-colors hover:border-ink"
         >
-          Play 128 instead
+          Play a game instead
         </Link>
       </div>
     </div>

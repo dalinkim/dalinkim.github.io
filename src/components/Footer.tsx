@@ -23,7 +23,7 @@ export default function Footer() {
             About
           </Link>
           <Link href="/play/" className="text-ink-muted transition-colors hover:text-primary">
-            Play 128
+            Play
           </Link>
           {LINKS.map((link) => (
             <a

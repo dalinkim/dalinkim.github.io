@@ -1,6 +1,12 @@
 // Pure game rules for 128. No React in here, which keeps the rules easy to
 // reason about: every function takes data in and returns new data out.
 
+import { bankTime } from "@/lib/gameClock";
+
+// The clock helpers are shared with the other games. Re-exported so
+// Game128.tsx can keep importing everything from here.
+export { bankTime, clockAt, formatTime } from "@/lib/gameClock";
+
 export const SIZE = 4;
 export const GOAL = 128;
 export const LADDER = [2, 4, 8, 16, 32, 64, 128];
@@ -109,24 +115,6 @@ export function newGame(stats: Stats, rolls: Rolls): Game {
 
 function statsOf(game: Game): Stats {
   return { best: game.best, wins: game.wins, fewest: game.fewest, fastest: game.fastest };
-}
-
-/** Stop the clock and bank the running stretch. */
-export function bankTime(game: Game, now: number): Game {
-  if (game.since === null) return game;
-  return { ...game, elapsed: game.elapsed + Math.max(0, now - game.since), since: null };
-}
-
-/** Live clock reading in ms. */
-export function clockAt(game: Pick<Game, "elapsed" | "since">, now: number) {
-  return game.elapsed + (game.since === null ? 0 : Math.max(0, now - game.since));
-}
-
-export function formatTime(ms: number) {
-  const tenths = Math.floor(ms / 100);
-  const minutes = Math.floor(tenths / 600);
-  const seconds = Math.floor((tenths % 600) / 10);
-  return `${minutes}:${String(seconds).padStart(2, "0")}.${tenths % 10}`;
 }
 
 /** The cells of one row or column, ordered from the edge the tiles slide toward. */
