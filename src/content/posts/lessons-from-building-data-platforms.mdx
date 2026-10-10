@@ -1,0 +1,36 @@
+---
+title: "Lessons from Building Data Platforms"
+date: "2026-09-20"
+description: "Placeholder post: a sketch of the things I wish I had known before my first platform team."
+tags: ["data engineering", "platforms"]
+placeholder: true
+---
+
+<Callout>
+This is a placeholder post. The outline below is a starting point, not finished writing.
+</Callout>
+
+## 1. Your users are other engineers
+
+A platform succeeds when the people building on it can move without asking you for help. Good defaults and clear docs beat clever features.
+
+## 2. Make the paved road the easy road
+
+If the recommended way to build a pipeline is harder than the hacky way, people will take the hacky way. Every time.
+
+```python
+# A paved-road pipeline should be this boring to start
+from platform import pipeline
+
+@pipeline(schedule="daily", owner="analytics")
+def orders():
+    ...
+```
+
+## 3. Observability is a feature
+
+Lineage, freshness and quality checks aren't extras. They're how your users learn to trust the data.
+
+<Callout variant="warning">
+Draft idea: expand each section with a real story.
+</Callout>
