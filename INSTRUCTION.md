@@ -48,3 +48,11 @@ Build a modern, premium personal website using **Next.js**. The site will featur
 - Added an MDX blog (`src/content/posts/`). Ported the "Fundamentals of Data Engineering" post from the old Jekyll `refresh` branch and added two placeholder posts. The Jekyll sample posts (apples, kiwifruit) were not carried over.
 - New pages: Home (hero + recent posts), Blog index, Post, About (resume + "Things I like" photos from the HTML5 UP site), 404.
 - Switched to static export and a GitHub Actions Pages deploy (`.github/workflows/deploy.yml`), developed on the `redesign` branch.
+
+### Phase 7: Databricks GenAI study guide series (2026-10-10)
+- Turned the user's Databricks Certified Generative AI Engineer Associate study notes (a 103-page PDF of course slides plus notes, certification earned June 2025) into a three-part blog series dated late June 2025: `databricks-genai-engineer-part-1-rag-foundations`, `-part-2-building-apps` and `-part-3-evaluate-deploy-operate`.
+- Slide screenshots were not reused. Every diagram is a React component in `src/components/diagrams/`:
+  - `primitives.tsx`: generic `Figure`, `Flow`/`Step`, `Lanes`/`Lane` and `Cards`/`Card`, usable straight from MDX with string props and Markdown children.
+  - `retrieval.tsx`, `systems.tsx`, `operations.tsx`: one-off diagrams for Parts 1, 2 and 3 (inline SVG or Tailwind layouts).
+  - `index.ts` exports `diagramComponents`, which `blog/[slug]/page.tsx` spreads into the MDX `components` map.
+- All diagram colours use the theme tokens (`fill-primary`, `bg-secondary-soft`, `stroke-line`…), so they follow light/dark mode. Step rows stack vertically below the `sm` breakpoint.

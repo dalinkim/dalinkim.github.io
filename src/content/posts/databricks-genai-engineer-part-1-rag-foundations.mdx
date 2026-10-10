@@ -1,0 +1,308 @@
+---
+title: "Databricks GenAI Engineer Study Guide, Part 1: Prompts, RAG and Vector Search"
+date: "2025-06-24"
+description: "What I studied for the Databricks Certified Generative AI Engineer Associate exam: prompt engineering, how RAG works, preparing and chunking data, embedding models and Mosaic AI Vector Search."
+tags: ["generative ai", "databricks", "certification", "study guide"]
+---
+
+I earned the **Databricks Certified Generative AI Engineer Associate** certification in June 2025. To prepare, I worked through Databricks' generative AI engineering material and kept detailed notes. The course is split into four modules:
+
+1. **Generative AI Solution Development**: prompts, RAG, data preparation and vector search
+2. **Generative AI Application Development**: compound AI systems, chains and agents
+3. **Generative AI Application Evaluation and Governance**: guardrails, security and evaluation metrics
+4. **Generative AI Application Deployment and Monitoring**: batch and real-time serving, monitoring and LLMOps
+
+This series turns those notes into a study guide in three parts. Part 1 covers the first module, which is the foundation for everything else: how to talk to a model, and how to give it knowledge it doesn't have.
+
+- **Part 1: Prompts, RAG and vector search** (you are here)
+- [Part 2: Assembling RAG apps, compound AI systems and agents](/blog/databricks-genai-engineer-part-2-building-apps/)
+- [Part 3: Evaluation, governance, deployment and LLMOps](/blog/databricks-genai-engineer-part-3-evaluate-deploy-operate/)
+
+## Prompt engineering
+
+Prompt engineering is the practice of designing and refining prompts to get better responses from an LLM. A good prompt usually has four components.
+
+<PromptAnatomy />
+
+### Prompting techniques
+
+The course covers four techniques. They are easy to mix up on the exam, so here's how I kept them apart.
+
+<Cards cols="2">
+<Card title="Zero-shot" tone="secondary">The prompt asks for a task **without any examples** or task-specific training. For example: "Classify the following review into neutral, negative or positive."</Card>
+<Card title="Few-shot" tone="secondary">The prompt includes **a few input-output examples** (several reviews with their sentiment labels) to guide the model toward the output you want.</Card>
+<Card title="Prompt chaining" tone="accent">Several prompts are linked, and **the output of one becomes the input of the next**. For example, first extract relevant quotes from a document, then answer the question using only those quotes.</Card>
+<Card title="Chain-of-thought" tone="accent">Ask the model to **articulate its reasoning step by step**, the way a person would. "Let's think step-by-step" is the classic trigger.</Card>
+</Cards>
+
+The chain-of-thought example from the course stuck with me. *"The bakery had 23 bananas. If they used 20 to make a cake and bought 6 more, how many bananas do they have?"* Asked directly, the model answered 27. With "Let's think step-by-step" added, it worked through 23 − 20 = 3, then 3 + 6 = 9, and got it right. The course also noted that research on CoT has **mixed findings**: some studies show it helps with reasoning, others show models don't always follow their stated reasoning faithfully.
+
+### Tips and tricks
+
+- **Prompts are model-specific.** Different models and different use cases need different prompts.
+- **Iterate.** Prompting is iterative development. The **temperature** parameter is one lever: higher for more creative output, lower for focused responses.
+- **Format your prompts.** Use delimiters to separate instructions from context: `###`, backticks, braces or brackets (`{}` / `[]`) and dashes (`---`).
+- **Ask for structured output**, such as HTML, JSON, a table or Markdown, and provide a correct example of the format.
+- **Guide the model toward better behaviour:**
+  - Don't hallucinate: *"Do not make things up if you do not know. Say 'I do not have that information'."*
+  - Don't assume or probe for sensitive information: *"Do not make assumptions based on nationalities"* or *"Do not ask the user to provide their SSNs."*
+  - Don't rush to a solution: ask the model to take time to "think", which is chain-of-thought again.
+- **Beware of bias and hallucination.**
+
+Prompt engineering is **simple and efficient**, gives **predictable results** and produces **tailored outputs**. Its big limitation is that the output depends on the model, and the model only knows what it learned in pre-training. **For external knowledge, we need RAG.**
+
+## From prompt engineering to RAG
+
+There are three ways a language model can learn knowledge, and they get cheaper as you move right.
+
+<KnowledgeSpectrum />
+
+Passing context in the prompt improves **factual recall**. The course compared it to taking an exam with open notes. Context windows keep getting larger, but the notes listed the downsides of stuffing a very long context into a prompt:
+
+- **Higher API costs**, because you pay per input token
+- **Longer completion and inference times**
+- Content in the middle of a long context can be overlooked. This is the "**lost in the middle**" problem, probed by the "**needle in a haystack**" test.
+
+## The RAG concept
+
+**Retrieval Augmented Generation (RAG)** was coined by Patrick Lewis and fellow Meta AI researchers ([arXiv 2005.11401](https://arxiv.org/pdf/2005.11401)). It solves a **knowledge gap**: the model was never trained on the information you need. Typical use cases are **Q&A chatbots**, **search augmentation**, and **content creation and summarization**.
+
+The RAG workflow has six main concepts:
+
+<Cards cols="3">
+<Card title="Index & embed" tag="1">An embedding model creates vector representations of the documents and of user queries.</Card>
+<Card title="Vector store" tag="2">Specialized storage for unstructured data indexed by vectors. It can be a vector DB, a library or a plugin.</Card>
+<Card title="Retrieval" tag="3">Similarity search over stored vectors to find the relevant information.</Card>
+<Card title="Filtering & reranking" tag="4">Select or rank retrieved documents before passing them as context. Filtering can happen pre-, in- or post-query.</Card>
+<Card title="Prompt augmentation" tag="5">Inject the retrieved data into the prompt as extra context.</Card>
+<Card title="Generation" tag="6">The LLM generates a response to the user's request.</Card>
+</Cards>
+
+Put together, a sample RAG architecture has three phases:
+
+<Lanes caption="A sample RAG architecture. Documents and questions go through the same embedding model so they land in the same vector space.">
+<Lane label="Document embedding">
+<Step title="Source documents">PDFs and other files</Step>
+<Step title="Embedding model" tone="secondary">Converts chunks or docs to embeddings</Step>
+<Step title="Vector store" tone="accent">Embeddings indexed for search</Step>
+</Lane>
+<Lane label="Dense vector retrieval">
+<Step title="User question" />
+<Step title="Embedding model" tone="secondary">Converts the query to an embedding</Step>
+<Step title="Similarity search" tone="accent">Find the closest chunks</Step>
+</Lane>
+<Lane label="In-context learning">
+<Step title="Similar chunks">Passed as context or memory</Step>
+<Step title="Generation model" tone="primary">Augments and generates the completion</Step>
+<Step title="Answer">Returned to the user</Step>
+</Lane>
+</Lanes>
+
+The benefits of RAG I wrote down:
+
+- **Up-to-date and accurate** responses
+- **Fewer hallucinations** (inaccurate responses)
+- **Citations** of the original sources
+- **Domain-specific** contextualization
+- **Efficiency and cost-effectiveness**, without the up-front overhead of fine-tuning. This matters most when the model would otherwise need frequent retraining on new data.
+
+## Preparing data for RAG
+
+Data preparation matters because of:
+
+- **GIGO** (garbage in, garbage out)
+- **Lost in the middle** and needle-in-a-haystack effects
+- **Inefficient retrieval**
+- **Exposing data** that shouldn't be exposed
+- Picking the **wrong embedding model**
+
+<Flow caption="A simple data prep process for RAG.">
+<Step title="Ingestion & pre-processing">From external sources</Step>
+<Step title="Storage & governance" tag="1" tone="secondary">Delta Lake + Unity Catalog</Step>
+<Step title="Chunking" tag="2" tone="accent">Fixed-size or context-aware</Step>
+<Step title="Embedding" tag="3" tone="primary">One vector per chunk</Step>
+<Step title="Vector store" />
+</Flow>
+
+### 1. Data storage and governance
+
+<Cards cols="2">
+<Card title="Delta Lake" tone="secondary">
+
+A **unified data management layer** that brings reliability and fast analytics to cloud data lakes (ADLS, GCS, S3). It's the optimized storage foundation of the Databricks platform. It holds structured, semi-structured, unstructured and streaming data, and supports:
+
+- Data quality: optimized performance, consistency and reliability
+- Data lineage: version tracking and governance
+- Featurization: feature definition, sharing and drift monitoring
+
+</Card>
+<Card title="Unity Catalog" tone="accent">
+
+**Governance, discovery and access control** for RAG applications:
+
+- Unified visibility into data and AI
+- A single permission model for data and AI
+- Open data sharing
+
+It provides discovery, access controls, lineage, monitoring, auditing and data sharing across **tables, files, models, notebooks and dashboards**.
+
+</Card>
+</Cards>
+
+### 2. Data extraction and chunking
+
+Chunking is the art of slicing and dicing data. The goal I underlined in my notes:
+
+<Callout>
+Make sure **the semantics of the query side match the semantics of the index side**, so retrieval quality is as high as possible.
+</Callout>
+
+The typical process is to split documents into chunks, embed each chunk with a model, and store the embeddings in a vector store. The risks are that **chunks can lose their context** and the result has **no overall logic or rigor**.
+
+**Chunking strategy is use-case specific**, so you experiment with different sizes and approaches:
+
+<ChunkingStrategies />
+
+- **Context-aware chunking** splits by sentence, paragraph or section, uses special punctuation (`.` or `\n`) to mark beginnings and ends, and can include or inject metadata, tags and titles.
+- **Fixed-size chunking** divides by a specific number of tokens. It's simple and computationally cheap.
+- **Chunk size changes meaning.** If one chunk is one sentence, its embedding focuses on a specific meaning. If one chunk is several paragraphs, the embedding captures a broader theme. Splitting by headers is another option.
+- **Chunk overlap** keeps contextual information from being lost between consecutive chunks.
+- **Windowed summarization** is a "context-enriching" method where each chunk includes a windowed summary of the previous few chunks.
+- **Know your users' query patterns.** Long queries may have embeddings better aligned to the returned chunks, while shorter queries can be more precise.
+- [ChunkViz](https://chunkviz.up.railway.app/) is a handy tool for visualizing chunk splits.
+
+**Advanced chunking strategies** use an LLM. You split a document into sections and summarize each section with an LLM before storing it. A richer variant stores each chunk alongside metadata such as the previous section's summary and image data, the current section's summary, and the next section's summary and image data.
+
+**Complex documents** (PDFs with tables, images and layout) need more care:
+
+- **Traditional libraries**: PyMuPDF, PyPDF
+- **Layout models**: Hugging Face LayoutLMv3, doctr, Donut
+- **Unstructured**: applies deep learning models built for text and context extraction
+- **Multi-modal models**: understand images, but were still more experimental at the time
+
+### 3. Choosing an embedding model
+
+An **embedding** is a numerical representation of content. To choose the right model, consider:
+
+- **Data and text properties**: vocabulary diversity (some models handle more diverse words), domain or topic (finance, medical, news and so on), and the typical length of the chunks you'll embed
+- **Model capabilities**: multi-language support and embedding dimensions
+- **Practical considerations**: context window limits (many embedding models **ignore text beyond their context window**), and privacy, cost and licensing when using proprietary API-based models
+
+<EmbeddingDecision />
+
+<Callout variant="warning">
+**Use the same embedding space for queries and documents.** Use the same embedding model for indexing and querying, or if you must use different models, make sure they were trained on similar data. The course's example: index movie data with one model, then query about medical literature through another, and you get bad results.
+</Callout>
+
+### Unstructured vs structured data prep on Databricks
+
+On Databricks, unstructured data prep looks like this. The difference between the two flavours is **who computes the embeddings**.
+
+<Lanes caption="Vector Search with Databricks-managed embeddings (top) and user-managed embeddings (bottom).">
+<Lane label="Databricks-managed embeddings">
+<Step title="Ingestion">Tables, Volumes</Step>
+<Step title="Document processing">Parse, clean, chunk, featurize (Workflows, DLT, Notebooks)</Step>
+<Step title="Storage" tone="secondary">Delta tables</Step>
+<Step title="Vector Search" tone="accent">Auto-sync; Databricks computes embeddings via Model Serving</Step>
+</Lane>
+<Lane label="User-managed embeddings">
+<Step title="Ingestion">Tables, Volumes</Step>
+<Step title="Document processing">Parse, clean, chunk, featurize</Step>
+<Step title="Embedding" tone="primary">You compute and save the embeddings</Step>
+<Step title="Storage" tone="secondary">Delta tables with chunks and vectors</Step>
+<Step title="Vector Search" tone="accent">Auto-sync</Step>
+</Lane>
+</Lanes>
+
+In both cases the models behind Model Serving can be **custom models, external models or foundation models**, open or proprietary. Structured data follows a different path: ingest rows into a Delta table, run feature engineering, store the features in Delta tables, then automatically sync them to **Feature Serving and Online Tables**.
+
+## Vector search
+
+### Vector stores
+
+**Vector databases** store unstructured or semi-structured data as high-dimensional vectors that encode features of objects such as images, text or audio. Traditional databases rely on exact matches or relational queries. Vector databases instead run **similarity searches using mathematical distance metrics**, with indexing techniques like **Hierarchical Navigable Small World (HNSW)** graphs and **Approximate Nearest Neighbor (ANN)** search to stay fast at scale.
+
+Common use cases are **RAG**, **recommendation engines** and **similarity search**. Spotify's [natural-language search for podcast episodes](https://engineering.atspotify.com/2022/03/introducing-natural-language-search-for-podcast-episodes/) is the example the course used.
+
+### Measuring similarity
+
+<SimilarityMetrics />
+
+### Search strategies
+
+- **K-nearest neighbors (KNN)** is exact search.
+- **Approximate nearest neighbors (ANN)** trades accuracy for speed. Example indexing algorithms:
+  - Tree-based: **ANNOY** by Spotify
+  - Proximity graphs: **HNSW**
+  - Clustering: **FAISS** by Facebook
+  - Hashing: **LSH**
+  - Vector compression: **ScaNN** by Google, and Product Quantization (**PQ**)
+
+### Do you even need a vector database?
+
+<Cards cols="3">
+<Card title="Do you really need it?" tone="warning">Some use cases don't need context augmentation at all, for example summarization, text classification and translation.</Card>
+<Card title="Performance & scalability" tone="secondary">Performant search and retrieval, quick navigation through massive datasets, and the ability to scale.</Card>
+<Card title="Governance" tone="accent">Effective GenAI apps need data governance, and the vector DB should integrate with your existing data infrastructure.</Card>
+</Cards>
+
+### Mosaic AI Vector Search
+
+Mosaic AI Vector Search is the vector database built into the Databricks Data Intelligence Platform. It:
+
+- Stores a vector representation of your data, **plus metadata**
+- Is **tightly integrated with the Lakehouse**
+- Is a scalable, low-latency production service with **zero operational overhead**
+- Supports **ACLs through Unity Catalog**
+- Has an API for real-time similarity search. Queries can **filter on metadata**, through a **REST API or a Python client**.
+
+There are three ways to use it, and the differences are a likely exam topic:
+
+<Cards cols="3">
+<Card title="Delta Sync, managed embeddings" tag="Method 1" tone="secondary">
+
+- **Automatic sync** from a source Delta table
+- **Databricks computes the embeddings** through a Model Serving endpoint
+- You **query with text**
+
+</Card>
+<Card title="Delta Sync, self-managed embeddings" tag="Method 2" tone="accent">
+
+- **Automatic sync** from a source Delta table
+- The table already holds **your own embedding column**
+- You **query with a vector**
+
+</Card>
+<Card title="Direct Access CRUD API" tag="Method 3" tone="primary">
+
+- **Manual sync**: you upsert and delete through the API
+- **Self-managed embeddings**
+- You **query with a vector**
+
+</Card>
+</Cards>
+
+Setting it up takes three components:
+
+<Flow caption="The key components to set up Vector Search.">
+<Step title="Vector Search endpoint" tag="Step 1" tone="secondary">The compute resource. Autoscales with index size or concurrent requests, and supports multiple compute types.</Step>
+<Step title="Model Serving endpoint" tag="Step 2" tone="primary">Only if Databricks computes the embeddings. Foundation Model APIs (e.g. BGE), external models (e.g. OpenAI ada-002) or custom models.</Step>
+<Step title="Vector Search index" tag="Step 3" tone="accent">Created and auto-synced from a Delta table. Real-time ANN search, governed by Unity Catalog, with index-level ACLs.</Step>
+</Flow>
+
+<Callout variant="tip">
+Two practical tips from my notes. First, **create a dedicated table that holds the embeddings**. Second, **create a separate vector search index off that table using "existing embedding column"**. At the time I studied, a Vector Search endpoint was tightly coupled with its index and couldn't be scaled down or shut down, so how you lay out tables and indexes affects cost.
+</Callout>
+
+## Part 1 checklist
+
+Before moving on, I made sure I could answer these without looking:
+
+- What are the four components of a prompt, and how do zero-shot, few-shot, prompt chaining and chain-of-thought differ?
+- Why does RAG beat pre-training or fine-tuning for adding fresh knowledge, and what are the downsides of a very long context?
+- What are the six main concepts in a RAG workflow?
+- When would you pick fixed-size vs context-aware chunking, and what do overlap and windowed summarization add?
+- Why must queries and documents share an embedding space?
+- Which Mosaic AI Vector Search method computes embeddings for you, and which ones expect you to query with a vector?
+
+In [Part 2](/blog/databricks-genai-engineer-part-2-building-apps/), these pieces get assembled into a real application with MLflow, then grown into compound AI systems and agents.

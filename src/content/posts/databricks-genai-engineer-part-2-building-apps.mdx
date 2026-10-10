@@ -1,0 +1,366 @@
+---
+title: "Databricks GenAI Engineer Study Guide, Part 2: RAG Apps, Compound AI Systems and Agents"
+date: "2025-06-27"
+description: "Assembling and evaluating a RAG application with MLflow, then designing compound AI systems, multi-stage chains, agents and multi-modal apps. My notes for the Databricks Generative AI Engineer Associate exam."
+tags: ["generative ai", "databricks", "certification", "study guide"]
+---
+
+In [Part 1](/blog/databricks-genai-engineer-part-1-rag-foundations/) I covered the raw materials of a GenAI solution: prompts, chunked and embedded data, and a vector index. This part is about building with them. First comes assembling and evaluating a RAG application, which closes out the solution development module. Then comes the application development module, which zooms out from a single RAG chain to **compound AI systems** and **agents**.
+
+- [Part 1: Prompts, RAG and vector search](/blog/databricks-genai-engineer-part-1-rag-foundations/)
+- **Part 2: Assembling RAG apps, compound AI systems and agents** (you are here)
+- [Part 3: Evaluation, governance, deployment and LLMOps](/blog/databricks-genai-engineer-part-3-evaluate-deploy-operate/)
+
+## Assembling a RAG application
+
+### The RAG application workflow
+
+A RAG app goes through a standard workflow from development to production. Development has two inner loops, one for the data pipeline and one for the chain.
+
+<Flow caption="The standard RAG application workflow. Monitoring and logging run underneath every stage." footer="Monitoring & logging">
+<Step title="Doc / data pipeline" tag="Development" tone="secondary">Inner dev loop 1, fed by data sources</Step>
+<Step title="Chain" tag="Development" tone="secondary">Inner dev loop 2</Step>
+<Step title="Staging web chat app" tag="Expert / user testing" tone="accent">Deploy for testers</Step>
+<Step title="Evaluation harness" tag="Offline evaluation" tone="primary">Score the chain</Step>
+<Step title="Production deployment" tag="Production" />
+</Flow>
+
+### What it looks like on Databricks
+
+The course's reference architecture splits into a **data preparation** half and an **inference** half. The example question was *"How can I track Databricks billing?"*
+
+<Lanes caption="Assembling a RAG application on Databricks.">
+<Lane label="(A) Data preparation">
+<Step title="PDF documents" />
+<Step title="Autoloader ingestion">Raw binary content from the storage bucket</Step>
+<Step title="Parse & split" tone="secondary">Split HTML or docs and extract clean text chunks</Step>
+<Step title="Vector Search index" tone="accent">Auto-syncs the Delta table; embeddings from Model Serving + Foundation Model API</Step>
+</Lane>
+<Lane label="(B) Inference">
+<Step title="User question" />
+<Step title="Application endpoint">Builds an engineered prompt with extended context</Step>
+<Step title="Similarity search" tone="accent">Near-real-time; finds similar docs as context</Step>
+<Step title="Model Serving" tone="primary">Proxy to custom, foundation or external models (route, credentials, throughput, logging)</Step>
+<Step title="Answer" />
+</Lane>
+</Lanes>
+
+### MLflow for RAG solutions
+
+**MLflow** is an open-source platform for the machine learning lifecycle. It's co-developed by Databricks and the ML community, comes pre-installed on the Databricks Runtime for ML, and is how Databricks operationalizes the GenAI development lifecycle.
+
+<MlflowCycle />
+
+**MLflow Tracking** makes a GenAI workflow manageable and transparent. A tracking server records four things:
+
+<Cards cols="4">
+<Card title="Parameters">LLM settings such as temperature, and model configurations</Card>
+<Card title="Metrics">Logged and compared to learn about LLM performance and accuracy</Card>
+<Card title="Artifacts">Outputs such as visualization images and serialized models</Card>
+<Card title="Source code">The model's source code from the run</Card>
+</Cards>
+
+**MLflow Models ("flavors")** are a standard format for packaging models:
+
+- Each MLflow Model is a **directory** of arbitrary files plus an `MLmodel` file.
+- The `MLmodel` file can define **multiple flavors** the model can be viewed in, so deployment tools can understand the model.
+- It can hold **additional metadata** such as the signature and an input example.
+
+Here's what `mlflow.langchain.log_model(model, "chain", ...)` writes:
+
+```text
+chain/
+├── model/
+│   ├── steps
+│   └── steps.yaml
+├── MLmodel
+├── lc_model.py
+├── conda.yaml
+├── python_env.yaml
+└── requirements.txt
+```
+
+```yaml
+# MLmodel
+artifact_path: chain
+flavors:
+  langchain:
+    code: null
+    langchain_version: 0.1.5
+    model_data: model
+  python_function:
+    loader_module: mlflow.langchain
+```
+
+Notice the `python_function` flavor next to `langchain`. **`mlflow.pyfunc`** is the default model interface for MLflow Python models. Every MLflow Python model is expected to be loadable as a Python function, which is what lets you deploy any of them the same way. Its key functions are `log_model`, `save_model`, `load_model` and `predict`. Built-in flavors include LangChain, OpenAI, Hugging Face, PyTorch, TensorFlow, ONNX and Python function.
+
+The **MLflow Model Registry** is a centralized model store, and the course recommends using **the registry in Unity Catalog**. It gives you deployment and organization, **versioning**, lifecycle management with **aliases** (for example `champion` for production), collaboration and permission management, full lineage, and tagging and annotations.
+
+<AliasTimeline />
+
+## Evaluating a RAG application
+
+RAG is complex, so you **evaluate each component separately and together**:
+
+- **Chunking**: method and size
+- **Embedding model**
+- **Vector store**: retrieval and the re-ranker
+- **Generator**: in my notes, the least of the concerns
+
+The evaluation metrics all come down to comparing pairs among the query, the retrieved context, the response and a ground-truth answer.
+
+<RagEvalMap />
+
+The diagram's three questions are worth memorizing:
+
+- **Is the answer relevant and accurate?** If not, ask whether the response is really using the context. A better prompt or better retrieval may be needed (needle in the haystack again).
+- **Is the context related to the query?**
+- **Is the response supported by the context?**
+
+The course illustrated each metric with Einstein questions. Two of them made the difference click for me:
+
+| Metric | Query | Good | Bad |
+| --- | --- | --- | --- |
+| Context recall | What significant scientific theories did Einstein contribute to? | Context mentions relativity **and** quantum mechanics | Context mentions only relativity |
+| Faithfulness | Where and when was Einstein born? | "Germany, 14 March 1879" (matches the context) | "Germany, 20 March 1879" (contradicts it) |
+
+### MLflow LLM evaluation
+
+MLflow can evaluate retrievers and LLMs efficiently in two ways:
+
+<Cards cols="2">
+<Card title="Batch evaluation in code" tone="secondary">
+
+- **LLM-as-a-judge**: evaluate with foundation models, to scale beyond human evaluation
+- **Ground truth**: evaluate efficiently against large curated datasets
+
+</Card>
+<Card title="Interactive evaluation in the UI" tone="accent">
+
+- Compare multiple models and prompts visually
+- Iteratively test new queries during development
+
+</Card>
+</Cards>
+
+<Callout variant="tip">
+**Create the evaluation dataset ahead of time**, with each question paired with its ground truth.
+</Callout>
+
+The hands-on demo followed these steps:
+
+<Flow caption="The “assembling a RAG application” demo.">
+<Step title="Set up components" tone="secondary">Retriever and foundation model</Step>
+<Step title="Assemble the pipeline" tone="secondary">The complete RAG chain</Step>
+<Step title="Evaluate" tone="accent">pandas or Spark DataFrame with inputs, answer, context and ground_truth, scored by MLflow</Step>
+<Step title="Register" tone="primary">Save the model to the Model Registry in Unity Catalog</Step>
+</Flow>
+
+## Foundations of compound AI systems
+
+### From models to systems
+
+A **compound AI system** is "a system that tackles AI tasks using multiple interacting components, including multiple calls to models, retrievers, or external tools." By that definition, **RAG is just a simple AI system** composed of a single task: retrieve domain-specific context, put it in a prompt with the query, and call the LLM.
+
+| Type of system | Components |
+| --- | --- |
+| Prompt engineering | Prompt generation logic, LLM |
+| Unstructured docs RAG | LLM, retrieval system |
+| Structured data RAG | LLM, a data API (e.g. a Databricks Online Table), a Text-to-SQL engine (e.g. Genie, which is more complicated in reality) |
+| Agent-based chain | Function-calling capable LLM, RAG chain, orchestration chain |
+| Orchestration chain | Function-calling capable LLM, API services |
+
+### Intents and tasks
+
+Real-world prompts usually have **multiple intents**. The course's example objective was to analyze the sentiment of a Japanese customer review. That one objective breaks into four intents, and some depend on each other (you translate before you summarize):
+
+<Flow caption="One objective, four dependent intents. A structured pipeline is needed to complete them.">
+<Step title="Translate" tone="secondary">Japanese review into English</Step>
+<Step title="Summarize" tone="secondary">The translated text</Step>
+<Step title="Sentiment" tone="accent">Analyze it</Step>
+<Step title="Classify" tone="primary">The type of feedback</Step>
+</Flow>
+
+The vocabulary is: a **system** serves **intents**, and an intent consists of one to many **tasks**.
+
+<SystemIntents />
+
+A **task** is a single interaction with an LLM, such as querying a SQL database or searching the web. LLMs can complete a huge range of tasks: summarization, sentiment analysis, translation, zero-shot classification, few-shot learning, conversation and chat, question answering, token classification, text classification and text generation. A **chain** is an application with more than a single interaction, stitching tasks into an end-to-end pipeline.
+
+The "summarize and sentiment" example shows why chaining matters:
+
+<Cards cols="2">
+<Card title="Initial solution: one overloaded LLM" tone="warning">Put all the articles together and have one LLM parse them for an overall sentiment. **Issue:** it quickly overwhelms the model's input length.</Card>
+<Card title="Better solution: two stages" tone="secondary">A **summary LLM** summarizes the articles first, then a **sentiment LLM** runs on the combined summaries to produce the overall sentiment.</Card>
+</Cards>
+
+## Designing compound AI systems
+
+The course frames design as an application development lifecycle that loops from monitoring back to analysis:
+
+<Flow caption="A systematic approach to designing a compound AI system. Production and monitoring are covered in Part 3.">
+<Step title="Analysis" tone="secondary">Objectives, user requirements, scope, functionality, constraints</Step>
+<Step title="Design" tone="secondary">Architecture, structure and behavior; technical challenges</Step>
+<Step title="Development" tone="accent">Coding, building and rigorous testing</Step>
+<Step title="Production" tone="primary">Deploy the system</Step>
+<Step title="Monitoring" tone="primary">Performance, usability and effectiveness against benchmarks</Step>
+</Flow>
+
+**Intent classification and chain building** happen in three steps:
+
+<Cards cols="3">
+<Card title="Identify intents" tag="01">Define possible intents from sample user queries. Define intent dependencies: are the tasks sequential or parallel?</Card>
+<Card title="Identify tools" tag="02">What tools do you need to accomplish each task? Web search, API interaction, code execution, text-to-speech or speech-to-text, and so on.</Card>
+<Card title="Build the chain" tag="03">Build a workflow from the tasks. Decide what architecture solves the problem (RAG, Text2SQL…). Iterate as needed.</Card>
+</Cards>
+
+The course's sample architecture is independent of any framework or model. A single class is served from Model Serving, and its `main()` calls each stage in turn:
+
+<Lanes caption="A sample compound AI system architecture. The whole Compound_rag_app class is deployed to Model Serving.">
+<Lane label="Compound_rag_app.main()">
+<Step title="run_search()" tone="accent">Calls Databricks Vector Search</Step>
+<Step title="run_augment()" tone="secondary">Wraps run_summary(), which calls a summary LLM</Step>
+<Step title="run_get_context()">Builds the context</Step>
+<Step title="run_qa()" tone="primary">Calls a QA LLM to answer</Step>
+</Lane>
+</Lanes>
+
+```python
+def main(self, question: str) -> str:
+    search_result = self.run_search(question)
+    augmented_result = self.run_augment(search_result)
+    context = self.run_get_context(augmented_result)
+    qa_result = self.run_qa(question, context)
+    return qa_result.get_answer()
+```
+
+In the planning demo, each stage was described by its **intent**, a **name** (PEP 8 naming), its **dependencies** (the libraries each stage needs) and its **signature**. The signature is split into **model_inputs** (change with every request), **params** (extra arguments that usually aren't changed by users once served) and **output**. Separating inputs from params early makes the configurable parameter space of the app clear. Splitting the chain into stages also makes each one easier to **test**, **trace** and **parameterize**.
+
+## Building multi-stage reasoning chains
+
+When building multi-stage chains, it helps to map everyday concepts to technical terms:
+
+| Concept | Technical term |
+| --- | --- |
+| Retrieval | Tool |
+| Task | Order of tools |
+| Questions + answers | Intent + route |
+| Metadata | Parameters for route |
+| Generation | Reasoning |
+
+**Composition frameworks** help manage multi-stage reasoning systems. Building compound AI systems needs new tools, and these frameworks were becoming popular:
+
+<Cards cols="2">
+<Card title="LangChain" tone="secondary">
+
+A framework for **creating GenAI apps that use LLMs**. It makes apps context-aware, able to reason, and able to interact with data sources and environments. It has **Databricks integrations**. Main components:
+
+- **Prompt**: structured input that communicates a task to the model
+- **Chain**: a sequence of automated actions or components
+- **Retriever**: returns relevant documents for an unstructured query
+- **Tool**: a functionality an agent can activate (APIs, databases, custom functions)
+
+</Card>
+<Card title="LlamaIndex" tone="accent">A data framework that enhances LLMs by **structuring and indexing data** so it's easy to consume. Components: models, prompts, indexing and storing, querying, and agents.</Card>
+<Card title="Haystack" tone="primary">An open-source Python framework for custom LLM apps focused on **document retrieval, text generation and summarization**. Components: generators, retrievers, document stores and pipelines.</Card>
+<Card title="DSPy" tone="warning">
+
+Programming with LMs and retrieval models **beyond manual prompting**:
+
+- **Signatures**: declarative modules (e.g. ChainOfThought, Retrieve, ReAct)
+- **Teleprompters**: optimizers that "compile" a program into instructions, few-shot prompts or fine-tuned weights
+- **Automatic compiler**: traces execution and generates high-quality prompts or fine-tunes
+
+</Card>
+</Cards>
+
+Popular agent libraries at the time were **LangChain agents** and **AutoGPT**. The rest of the Databricks toolbox for compound systems was **Vector Search** (from Part 1), **MLflow Tracking** for logging chains, **Model Serving** for serving custom chains, **MLflow Evaluation** for metrics, and **Lakehouse Monitoring** for deployed chains. The last three come up again in Part 3.
+
+## Agents and cognitive architectures
+
+### What is an agent?
+
+So far, compound systems had **hard-coded calls** to tools and services. An **agent** is an application that executes complex tasks by using a language model to **define the sequence of actions** to take. It replaces hard-coded sequences with **query-dependent sequences chosen dynamically by the LLM**.
+
+<AgenticVsNot />
+
+<AgentAnatomy />
+
+- **Task**: the user request, delivered through a prompt
+- **LLM (brain)**: the central coordinator that manages the agent's core logic and behaviour
+- **Tools**: external resources the agent uses to accomplish tasks
+- **Memory and planning**: components for planning and executing future actions
+
+The course's hypothetical **financial-advisor agent** took the task *"Is it the right time to invest in NVIDIA stock?"* Its sub-tasks were to decide which actions are needed and in what order, then look up the current stock price, the latest financials, the latest news and announcements, and the current sentiment score.
+
+<Flow caption="The financial-advisor agent's workflow.">
+<Step title="Process task" tone="accent">LLM understands the request and decides the actions</Step>
+<Step title="Collect data" tone="secondary">Financials, stock price, latest news…</Step>
+<Step title="Data analysis" tone="accent">LLM analyzes data and sentiment</Step>
+<Step title="Output generation" tone="primary">LLM synthesizes a coherent report</Step>
+</Flow>
+
+### Agent reasoning patterns
+
+**Agent reasoning** is the cognitive process by which agents analyze information, draw logical conclusions and **make decisions autonomously**. Independent of language and framework, there are four design patterns:
+
+<ReactLoop />
+
+<Cards cols="3">
+<Card title="Tool use / function calling" tone="secondary">
+
+Agents call external tools and APIs, and their reasoning decides which tools to use and when. Example tools:
+
+- Research: web browsing, search engines, Wikipedia
+- Documents: database, vector DB and document loaders
+- Image: generation, detection, classification
+- Coding: code execution, doc generation, debugging and testing
+
+</Card>
+<Card title="Planning" tone="accent">Agents must adjust their goals and plans as conditions change. Real tasks have sub-tasks that need careful orchestration. A task can be a **single task**, a **sequential task** or a **graph task**. HuggingGPT was the example.</Card>
+<Card title="Multi-agent collaboration" tone="primary">Hard tasks don't scale with one agent. Several **specialized agents** each handle part of the task, which gives **modularization**. Each can use the same or a different (e.g. fine-tuned) LLM. ChatDev was the example.</Card>
+</Cards>
+
+Notable tools for building agents:
+
+- **LangChain Agents**: a structure for agents that use tools to interact with the world
+- **AutoGPT**: tools to build AI agents
+- **OpenAI Function Calling**: the model is called with a set of functions and can choose to call one or more of them
+- **AutoGen**: apps with multiple agents that can talk to each other
+- **Transformers Agents** (Hugging Face): a natural-language API for interacting with transformers
+
+## Multi-modal AI applications
+
+**Multi-modal models** have inputs or outputs beyond text, most commonly **image, audio and video**. This area was actively being explored.
+
+- **Multi-modal retrieval**: each modality has its own challenges. The approaches to storing them are to embed all modalities in **the same vector space** (e.g. CLIP), to use **one modality as the main one** and adapt the rest to it, or to **embed each modality separately**.
+- **Multi-modal generators**: emerging **multi-modal LLMs (MLLMs)** such as GPT-4V(ision) can respond in multiple formats, for example generating a story with images.
+
+<Lanes caption="A sample multi-modal RAG architecture. Images are turned into text descriptions by an MLLM so they can share the text embedding space.">
+<Lane label="Indexing">
+<Step title="Documents">Pre-processing splits images from text</Step>
+<Step title="Image description" tone="accent">An MLLM generates a description of each image</Step>
+<Step title="Text chunking" tone="secondary">Text is chunked as usual</Step>
+<Step title="Embedding model" tone="secondary" />
+<Step title="Vector store" />
+</Lane>
+<Lane label="Query">
+<Step title="Query" />
+<Step title="Embedding model" tone="secondary" />
+<Step title="Similar chunks">From the vector store</Step>
+<Step title="MLLM" tone="accent" />
+<Step title="Generated response" tone="primary">Text + images</Step>
+</Lane>
+</Lanes>
+
+## Part 2 checklist
+
+- What does the standard RAG application workflow look like, and where do the two inner dev loops sit?
+- What does MLflow Tracking record? What is the `MLmodel` file, and why does every Python model get a `python_function` flavor?
+- Why use the Model Registry in Unity Catalog, and what is an alias like `@champion` for?
+- Which two of query, context, response and ground truth does each RAG metric compare?
+- What makes a system "compound", and how do systems, intents and tasks relate?
+- How does an agent differ from a hard-coded chain? What are ReAct's three states?
+- What are the three ways to store multiple modalities for retrieval?
+
+In [Part 3](/blog/databricks-genai-engineer-part-3-evaluate-deploy-operate/), I cover what happens after the app works on my laptop: guardrails and security, evaluating LLMs and whole systems, batch and real-time deployment, monitoring, and LLMOps.

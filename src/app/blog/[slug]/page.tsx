@@ -4,6 +4,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import Callout from "@/components/Callout";
+import { diagramComponents } from "@/components/diagrams";
 import { formatDate, getAllPosts, getPost } from "@/lib/posts";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -50,7 +51,7 @@ export default async function PostPage({ params }: Props) {
       <div className="prose mt-10">
         <MDXRemote
           source={post.content}
-          components={{ Callout }}
+          components={{ Callout, ...diagramComponents }}
           options={{ mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeSlug] } }}
         />
       </div>
