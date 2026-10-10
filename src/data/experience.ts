@@ -32,26 +32,21 @@ export const experiences: CompanyExperience[] = [
         location: "Appleton, WI (Remote)",
         roles: [
             {
-                title: "Staff Engineer - Enterprise AI/ML Platform (Engineering Lead)",
+                title: "Staff Engineer - Enterprise AI Platform (Engineering Lead)",
                 period: "01/2025 – Present",
                 current: true,
                 highlights: [
-                    "Designed and drove the foundational AI/ML platform architecture on Databricks, establishing a new home for data science teams and migrating them off a legacy data platform.",
-                    "Led a paved-path approach to AI/ML delivery, building an MLOps framework with standardized CI/CD so deployments are repeatable across teams and environments.",
-                    "Served as a primary engineering lead in the enterprise AI/ML charter, driving cross-org alignment on AI/ML direction, ownership, and delivery standards.",
-                    "Shaped a hybrid Databricks + AWS architecture for batch and real-time ML, guiding teams through RBAC, environment readiness, cross-account networking, and IaC patterns on a new AWS platform.",
-                    "Authored foundational ADRs on environment isolation and IaC standards, and owned the batch and real-time ML reference architecture as the source of truth for delivery decisions.",
-                    "Reduced support load and onboarding time with self-service onboarding guides, support documentation, and reusable templates.",
-                    "Ran hands-on lab sessions at the Thrivent Engineering Conference, organized recurring AI/ML communities of practice, and mentored engineers on platform architecture and intent.",
+                    "Building platform on AWS & Databricks to support end-to-end enterprise AI lifecycle.",
                 ],
             },
             {
                 title: "Staff Engineer - Enterprise Data Platform (Engineering Lead)",
                 period: "11/2023 – 01/2025",
                 highlights: [
-                    "Orchestrated development and optimization of core data platform infrastructure streamlining end-to-end data engineering lifecycle and service reliability.",
-                    "Engineered ingestion and transformation frameworks that productionalized 3k+ quality datasets accelerating data activation and time-to-delivery for downstream consumers.",
-                    "Redesigned and automated data access request workflow achieving 90%+ reduction in fulfillment latency while strengthening security compliance.",
+                    "Architected and led engineering of the enterprise data platform on Databricks, as the Databricks subject matter expert. This covered the core infrastructure plus the ingestion and transformation frameworks behind the end-to-end data engineering lifecycle.",
+                    "Built config-driven frameworks and reusable data processing patterns that productionalized 4k+ quality datasets, shortening time-to-delivery for downstream consumers.",
+                    "Designed and developed microservices for data contracts, metadata, and access control. Redesigned the data access request workflow, cutting fulfillment time by 90%+ while strengthening security compliance.",
+                    "Improved platform observability by measuring and reporting metrics on data assets, workflows, and metadata, giving engineering teams and stakeholders clear visibility into platform health and usage.",
                 ],
             },
         ],

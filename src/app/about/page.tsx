@@ -24,7 +24,7 @@ export default function About() {
         <h1 className="font-display text-5xl font-extrabold tracking-tight">About me</h1>
         <p className="mt-4 text-xl text-ink-muted">
           I&apos;m a husband, a father and a staff engineer at Thrivent, where I lead engineering
-          for the enterprise AI/ML platform.
+          for the enterprise AI platform.
         </p>
       </section>
 

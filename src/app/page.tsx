@@ -27,7 +27,7 @@ export default function Home() {
               and write about what I learn.
             </h1>
             <p className="mt-6 max-w-xl text-xl text-ink-muted">
-              Staff engineer leading the enterprise AI/ML platform at Thrivent.
+              Staff engineer leading the enterprise AI platform at Thrivent.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
