@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+/* Dark mode follows the data-theme attribute set on <html> (see ThemeScript). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------- Design tokens ---------- */
+:root {
+  --bg: hsl(36 45% 97%);
+  --surface: hsl(0 0% 100%);
+  --surface-muted: hsl(36 30% 92%);
+  --ink: hsl(240 22% 14%);
+  --ink-muted: hsl(240 8% 38%);
+  --border: hsl(36 18% 85%);
+  --primary: hsl(12 85% 54%);
+  --primary-soft: hsl(12 90% 94%);
+  --secondary: hsl(174 72% 30%);
+  --secondary-soft: hsl(174 50% 92%);
+  --accent: hsl(262 70% 58%);
+  --warning: hsl(38 92% 45%);
+  --warning-soft: hsl(42 100% 92%);
+  --code-bg: hsl(240 22% 14%);
+  --code-ink: hsl(36 40% 92%);
+  --shadow: 0 1px 2px hsl(36 30% 40% / 0.08), 0 8px 24px hsl(36 30% 40% / 0.1);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: hsl(234 30% 9%);
+  --surface: hsl(234 26% 13%);
+  --surface-muted: hsl(234 22% 17%);
+  --ink: hsl(36 30% 93%);
+  --ink-muted: hsl(234 12% 70%);
+  --border: hsl(234 18% 22%);
+  --primary: hsl(40 100% 62%);
+  --primary-soft: hsl(40 60% 18%);
+  --secondary: hsl(168 65% 58%);
+  --secondary-soft: hsl(168 40% 16%);
+  --accent: hsl(262 90% 76%);
+  --warning: hsl(32 100% 64%);
+  --warning-soft: hsl(32 50% 17%);
+  --code-bg: hsl(234 32% 6%);
+  --code-ink: hsl(36 30% 90%);
+  --shadow: 0 1px 2px hsl(0 0% 0% / 0.3), 0 8px 24px hsl(0 0% 0% / 0.35);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
+  --font-mono: var(--font-code);
+}
+
+/* ---------- Base ---------- */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---------- Article typography ---------- */
+.prose {
+  color: var(--ink);
+}
+
+.prose > * + * {
+  margin-top: 1.25em;
+}
+
+.prose h2,
+.prose h3 {
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 6rem;
+}
+
+.prose h2 {
+  font-size: 1.75rem;
+  margin-top: 2.5em;
+  color: var(--secondary);
+}
+
+.prose h3 {
+  font-size: 1.3rem;
+  margin-top: 2em;
+}
+
+.prose h2 + *,
+.prose h3 + * {
+  margin-top: 0.75em;
+}
+
+.prose a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  transition: text-decoration-color 150ms;
+}
+
+.prose a:hover {
+  text-decoration-color: var(--primary);
+}
+
+.prose strong {
+  font-weight: 700;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+}
+
+.prose ul {
+  list-style: none;
+}
+
+.prose ul > li {
+  position: relative;
+}
+
+.prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.1em;
+  top: 0.68em;
+  width: 0.4em;
+  height: 0.4em;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.prose ul ul > li::before {
+  background: transparent;
+  border: 2px solid var(--secondary);
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li + li,
+.prose li > ul,
+.prose li > ol {
+  margin-top: 0.4em;
+}
+
+.prose :not(pre) > code {
+  font-family: var(--font-code), monospace;
+  font-size: 0.875em;
+  background: var(--surface-muted);
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+}
+
+.prose pre {
+  font-family: var(--font-code), monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--accent);
+  padding-left: 1.25rem;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 3em 0;
+}
+
+.prose img {
+  border-radius: 12px;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.prose th,
+.prose td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
