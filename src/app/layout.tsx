@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s · Dalin",
   },
   description:
-    "Dalin builds AI and data platforms, and writes about them here.",
+    "Dalin works with AI and data platforms.",
 };
 
 // Runs before first paint so the page never flashes the wrong theme.

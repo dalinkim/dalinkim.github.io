@@ -20,17 +20,14 @@ export default function Home() {
               Hello! <span lang="ko">안녕하세요!</span>
             </p>
             <h1 className="font-display text-[clamp(1.9rem,9vw,3.75rem)] font-extrabold leading-[1.05] tracking-tight">
-              I&apos;m Dalin. I build{" "}
+              I&apos;m Dalin. I work with{" "}
               <span className="relative whitespace-nowrap text-primary">
                 AI &amp; data platforms
                 <Squiggle />
-              </span>{" "}
-              and write about what I learn.
+              </span>
+              .
             </h1>
-            <p className="mt-6 max-w-xl text-xl text-ink-muted">
-              Staff engineer leading the enterprise AI platform at Thrivent.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 href="/blog/"
                 className="rounded-full bg-primary px-6 py-3 font-bold text-bg shadow-[var(--shadow)] transition-transform hover:-translate-y-0.5"
