@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BoardPreview from "@/components/game128/BoardPreview";
 import PipelinePreview from "@/components/pipeline/PipelinePreview";
+import SkewPreview from "@/components/skew/SkewPreview";
 
 export const metadata: Metadata = {
   title: "Play",
-  description: "Quick browser games for a coffee break: 128 and Pipeline.",
+  description: "Quick browser games for a coffee break: 128, Pipeline and Skew.",
 };
 
 const GAMES = [
@@ -22,6 +23,13 @@ const GAMES = [
     blurb: "The pipes are scrambled. Turn the tiles until data from the source reaches every table, with no pipe left open.",
     tags: ["Logic puzzle", "3 board sizes"],
     preview: <PipelinePreview className="w-40 -rotate-3 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
+  },
+  {
+    href: "/play/skew/",
+    title: "Skew",
+    blurb: "A stage waits on its slowest worker. Spread the tasks so the busiest one finishes at par, and salt the hot ones.",
+    tags: ["Load balancing", "3 levels"],
+    preview: <SkewPreview className="w-48 rotate-2 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
   },
 ];
 
@@ -42,14 +50,14 @@ export default function PlayPage() {
           </p>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {GAMES.map((game) => (
             <Link
               key={game.href}
               href={game.href}
               className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-[var(--shadow)] transition-transform hover:-translate-y-1"
             >
-              <div className="grid place-items-center bg-surface-muted/60 py-8">{game.preview}</div>
+              <div className="grid h-56 place-items-center bg-surface-muted/60">{game.preview}</div>
               <div className="flex flex-1 flex-col p-6">
                 <h2 className="font-display text-3xl font-extrabold tracking-tight">{game.title}</h2>
                 <p className="mt-2 flex-1 text-base text-ink-muted">{game.blurb}</p>

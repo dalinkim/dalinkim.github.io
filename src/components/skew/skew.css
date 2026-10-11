@@ -1,0 +1,178 @@
+/* ---------- Skew: board ----------
+   Lanes are drawn to scale. --unit is the width of one second of work: the
+   track width (the board minus padding, the lane label and the gap) divided
+   by --scale seconds. Task blocks, queue chips and the par line all measure
+   themselves in --unit, so they line up. */
+.skew-wrap {
+  position: relative;
+  container-type: inline-size;
+}
+
+.skew-board {
+  --pad: 1rem;
+  --label: 4.75rem;
+  --gap: 0.6rem;
+  --unit: calc((100cqw - 2 * var(--pad) - var(--label) - var(--gap)) / var(--scale));
+  padding: var(--pad);
+  border-radius: 1.5rem;
+  background: hsl(36 26% 84%);
+  box-shadow:
+    inset 0 2px 6px hsl(36 30% 30% / 0.18),
+    var(--shadow);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+[data-theme="dark"] .skew-board {
+  background: hsl(234 26% 15%);
+  box-shadow:
+    inset 0 2px 8px hsl(0 0% 0% / 0.45),
+    0 0 0 1px var(--border),
+    var(--shadow);
+}
+
+.skew-board[data-solved="true"] {
+  animation: skew-solved 900ms ease-out;
+}
+
+.skew-zone {
+  border-radius: 0.9rem;
+  background: hsl(36 30% 91%);
+  box-shadow: inset 0 2px 4px hsl(36 30% 40% / 0.12);
+  transition: box-shadow 150ms, background-color 150ms;
+}
+
+[data-theme="dark"] .skew-zone {
+  background: hsl(234 22% 20%);
+  box-shadow: inset 0 2px 4px hsl(0 0% 0% / 0.35);
+}
+
+/* Where a task would land: the lane under the pointer while dragging. */
+.skew-zone[data-target="true"] {
+  box-shadow:
+    inset 0 0 0 2px var(--primary),
+    inset 0 2px 4px hsl(36 30% 40% / 0.12);
+}
+
+.skew-lane {
+  display: grid;
+  grid-template-columns: var(--label) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: center;
+}
+
+.skew-track {
+  position: relative;
+  display: flex;
+  height: 2.75rem;
+  padding: 0;
+}
+
+/* The busiest worker: everyone else waits on it. */
+.skew-track[data-straggler="true"] {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--primary) 70%, transparent),
+    0 0 14px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.skew-par {
+  position: absolute;
+  top: -0.5rem;
+  bottom: -0.25rem;
+  left: calc(var(--label) + var(--gap) + var(--par) * var(--unit));
+  width: 0;
+  border-left: 2px dashed var(--ink-muted);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ---------- Skew: tasks ---------- */
+.skew-task {
+  --task-bg: hsl(var(--hue) 78% 64%);
+  --task-ink: hsl(var(--hue) 55% 16%);
+  position: relative;
+  flex: none;
+  width: calc(var(--size) * var(--unit));
+  height: 2.75rem;
+  border-radius: 0.55rem;
+  background-color: var(--task-bg);
+  color: var(--task-ink);
+  box-shadow:
+    inset 0 -3px 0 hsl(0 0% 0% / 0.14),
+    inset 0 0 0 1px hsl(0 0% 0% / 0.1);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: grab;
+  /* Dragging a task moves the task instead of scrolling the page. */
+  touch-action: none;
+  transition: transform 120ms, opacity 120ms;
+  animation: task-in 180ms ease-out;
+}
+
+[data-theme="dark"] .skew-task {
+  --task-bg: hsl(var(--hue) 62% 58%);
+  --task-ink: hsl(var(--hue) 60% 10%);
+}
+
+/* Salted halves are striped, so you can see which tasks were split. */
+.skew-task[data-salted="true"] {
+  background-image: repeating-linear-gradient(135deg, hsl(0 0% 100% / 0.38) 0 4px, transparent 4px 10px);
+}
+
+.skew-task[aria-pressed="true"] {
+  z-index: 1;
+  transform: translateY(-3px);
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.skew-task[data-dragging="true"] {
+  opacity: 0.3;
+}
+
+.skew-task:disabled {
+  cursor: default;
+}
+
+/* Absolute, not fixed: the wrapper is a size container, and containers act
+   as the containing block even for fixed elements. */
+.skew-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  transform: translate(var(--x), var(--y)) rotate(-3deg) scale(1.06);
+  box-shadow: 0 12px 28px hsl(0 0% 0% / 0.3);
+  animation: none;
+}
+
+.skew-board[data-solved="true"] .skew-track {
+  box-shadow:
+    inset 0 0 0 2px var(--secondary),
+    0 0 14px color-mix(in srgb, var(--secondary) 35%, transparent);
+}
+
+.skew-win {
+  animation: skew-win 360ms 250ms ease-out backwards;
+}
+
+@keyframes task-in {
+  from { transform: scale(0.85); opacity: 0.4; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes skew-solved {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes skew-win {
+  from { opacity: 0; transform: translateY(0.75rem); }
+  to { opacity: 1; transform: none; }
+}
