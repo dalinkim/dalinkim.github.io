@@ -1,28 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BoardPreview from "@/components/game128/BoardPreview";
+import MobilesPreview from "@/components/mobiles/MobilesPreview";
 import PipelinePreview from "@/components/pipeline/PipelinePreview";
 import SkewPreview from "@/components/skew/SkewPreview";
 
 export const metadata: Metadata = {
   title: "Play",
-  description: "Quick browser games for a coffee break: 128, Pipeline and Skew.",
+  description: "Quick browser games for a coffee break: Pipeline, Mobiles, 128 and Skew.",
 };
 
 const GAMES = [
-  {
-    href: "/play/128/",
-    title: "128",
-    blurb: "My take on 2048, shrunk to fit a coffee break. Slide the tiles, merge matching numbers and climb to 2⁷.",
-    tags: ["Sliding tiles", "A few minutes"],
-    preview: <BoardPreview className="w-40 rotate-3 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
-  },
   {
     href: "/play/pipeline/",
     title: "Pipeline",
     blurb: "The pipes are scrambled. Turn the tiles until data from the source reaches every table, with no pipe left open.",
     tags: ["Logic puzzle", "3 board sizes"],
     preview: <PipelinePreview className="w-40 -rotate-3 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
+  },
+  {
+    href: "/play/mobiles/",
+    title: "Mobiles",
+    blurb: "Every bar hangs level, and every shape has a secret weight. Work out what each one weighs. It's algebra in disguise.",
+    tags: ["Number puzzle", "3 levels"],
+    preview: <MobilesPreview className="w-44 rotate-2 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
+  },
+  {
+    href: "/play/128/",
+    title: "128",
+    blurb: "My take on 2048, shrunk to fit a coffee break. Slide the tiles, merge matching numbers and climb to 2⁷.",
+    tags: ["Sliding tiles", "A few minutes"],
+    preview: <BoardPreview className="w-40 rotate-3 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
   },
   {
     href: "/play/skew/",
@@ -50,7 +58,7 @@ export default function PlayPage() {
           </p>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {GAMES.map((game) => (
             <Link
               key={game.href}
