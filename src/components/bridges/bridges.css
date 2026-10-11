@@ -1,0 +1,191 @@
+/* ---------- Bridges: board ----------
+   The islands sit on a pale "sea" inside the same sand tray as the other
+   games. */
+.bridges-board {
+  --bridge: hsl(240 22% 22%);
+  --island-edge: hsl(36 14% 58%);
+  padding: 0.9rem;
+  border-radius: 1.5rem;
+  background: hsl(36 26% 84%);
+  box-shadow:
+    inset 0 2px 6px hsl(36 30% 30% / 0.18),
+    var(--shadow);
+  user-select: none;
+  -webkit-user-select: none;
+  /* Taps add bridges straight away instead of waiting to see if it's a double-tap zoom. */
+  touch-action: manipulation;
+}
+
+[data-theme="dark"] .bridges-board {
+  --bridge: hsl(36 30% 88%);
+  --island-edge: hsl(234 12% 48%);
+  background: hsl(234 26% 15%);
+  box-shadow:
+    inset 0 2px 8px hsl(0 0% 0% / 0.45),
+    0 0 0 1px var(--border),
+    var(--shadow);
+}
+
+.bridges-board[data-solved="true"] {
+  --bridge: var(--secondary);
+  animation: bridges-solved 900ms ease-out;
+}
+
+.bridges-sea {
+  border-radius: 1rem;
+  background: hsl(196 45% 90%);
+  box-shadow: inset 0 2px 4px hsl(200 40% 30% / 0.12);
+}
+
+[data-theme="dark"] .bridges-sea {
+  background: hsl(214 30% 20%);
+  box-shadow: inset 0 2px 4px hsl(0 0% 0% / 0.35);
+}
+
+.bridges-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bridges-dots {
+  fill: hsl(200 30% 70%);
+}
+
+[data-theme="dark"] .bridges-dots {
+  fill: hsl(214 20% 32%);
+}
+
+/* ---------- Bridges: bridges ---------- */
+.bridges-hit {
+  fill: transparent;
+}
+
+.bridges-slot[data-interactive="true"] {
+  cursor: pointer;
+  outline: none;
+}
+
+.bridges-slot[data-locked="true"] {
+  cursor: default;
+}
+
+.bridges-slot:focus-visible .bridges-hit {
+  stroke: var(--primary);
+  stroke-width: 2.5;
+}
+
+.bridges-line {
+  stroke: var(--bridge);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  /* Drawn in from one end each time it appears. */
+  stroke-dasharray: 1;
+  animation: bridge-draw 160ms ease-out;
+  transition: stroke 300ms;
+}
+
+.bridges-slot[data-locked="true"] .bridges-line {
+  stroke: var(--secondary);
+}
+
+/* A faint preview of the bridge you're about to build. */
+.bridges-ghost {
+  stroke: var(--bridge);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 2 6;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+@media (hover: hover) {
+  .bridges-slot:hover .bridges-ghost {
+    opacity: 0.35;
+  }
+}
+
+/* A bridge in the way of the one you just tapped. */
+.bridges-slot[data-flash="true"] .bridges-line {
+  stroke: var(--warning);
+  animation: bridge-blocked 450ms ease-out;
+}
+
+/* ---------- Bridges: islands ----------
+   White while they need more bridges, teal when the count is exactly right,
+   orange when there are too many. */
+.bridges-island {
+  pointer-events: none;
+}
+
+.bridges-island circle {
+  fill: var(--surface);
+  stroke: var(--island-edge);
+  stroke-width: 2.5;
+  transition: fill 200ms, stroke 200ms;
+}
+
+.bridges-island text {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  fill: var(--ink);
+  transition: fill 200ms;
+}
+
+.bridges-island[data-state="done"] circle {
+  fill: var(--secondary);
+  stroke: var(--secondary);
+  animation: island-done 320ms ease-out;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.bridges-island[data-state="done"] text {
+  fill: var(--surface);
+}
+
+.bridges-island[data-state="over"] circle {
+  fill: var(--warning-soft);
+  stroke: var(--warning);
+}
+
+.bridges-win {
+  animation: bridges-win 360ms 250ms ease-out backwards;
+}
+
+@keyframes bridge-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes bridge-blocked {
+  0%, 100% { opacity: 1; }
+  30%, 70% { opacity: 0.35; }
+}
+
+@keyframes island-done {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bridges-win {
+  from { opacity: 0; transform: translateY(0.75rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes bridges-solved {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bridges-line,
+  .bridges-island circle,
+  .bridges-board[data-solved="true"],
+  .bridges-win {
+    animation: none;
+  }
+}

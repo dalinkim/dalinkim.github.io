@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BoardPreview from "@/components/game128/BoardPreview";
+import BridgesPreview from "@/components/bridges/BridgesPreview";
 import MobilesPreview from "@/components/mobiles/MobilesPreview";
 import PipelinePreview from "@/components/pipeline/PipelinePreview";
 import SkewPreview from "@/components/skew/SkewPreview";
 
 export const metadata: Metadata = {
   title: "Play",
-  description: "Quick browser games for a coffee break: Pipeline, Mobiles, 128 and Skew.",
+  description: "Quick browser games for a coffee break: Pipeline, Mobiles, Bridges, 128 and Skew.",
 };
 
 const GAMES = [
@@ -24,6 +25,13 @@ const GAMES = [
     blurb: "Every bar hangs level, and every shape has a secret weight. Work out what each one weighs. It's algebra in disguise.",
     tags: ["Number puzzle", "3 levels"],
     preview: <MobilesPreview className="w-44 rotate-2 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
+  },
+  {
+    href: "/play/bridges/",
+    title: "Bridges",
+    blurb: "Every island says how many bridges it needs. Build them all, with no crossings, so every island joins one network.",
+    tags: ["Logic puzzle", "3 levels"],
+    preview: <BridgesPreview className="w-40 -rotate-2 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105" />,
   },
   {
     href: "/play/128/",

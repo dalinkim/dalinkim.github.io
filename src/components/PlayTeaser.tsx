@@ -17,7 +17,7 @@ export default function PlayTeaser() {
         <h2 className="mt-1 font-display text-3xl font-extrabold tracking-tight">Play a game</h2>
         <p className="mt-2 text-base text-ink-muted">
           Quick puzzles for a coffee break: plumb a data pipeline, weigh the shapes on a mobile,
-          merge tiles up to 2<sup>7</sup>, or balance a skewed Spark stage.
+          link islands with bridges, merge tiles up to 2<sup>7</sup>, or balance a skewed Spark stage.
         </p>
         <span className="mt-4 inline-flex items-center gap-1 font-bold text-primary">
           Pick a game
