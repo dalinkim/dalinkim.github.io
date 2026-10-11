@@ -10,7 +10,7 @@ export default function Footer() {
     <footer className="mt-24 border-t border-line bg-surface-muted/50">
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
-          <p className="font-display text-lg font-extrabold">Dalin Kim</p>
+          <p className="font-display text-lg font-extrabold">Dalin</p>
           <p className="text-sm text-ink-muted">
             © {new Date().getFullYear()} · Built with Next.js, hosted on GitHub Pages
           </p>

@@ -11,11 +11,11 @@ const code = JetBrains_Mono({ variable: "--font-code", subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://dalinkim.github.io"),
   title: {
-    default: "Dalin Kim",
-    template: "%s · Dalin Kim",
+    default: "Dalin",
+    template: "%s · Dalin",
   },
   description:
-    "Dalin Kim builds AI and data platforms, and writes about them here.",
+    "Dalin builds AI and data platforms, and writes about them here.",
 };
 
 // Runs before first paint so the page never flashes the wrong theme.
